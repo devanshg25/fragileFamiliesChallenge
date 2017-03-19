@@ -1,7 +1,8 @@
 import numpy as np
+import pandas as pd
 
-bg = open('output.csv', 'r')
-train = open('train.csv', 'r')
+bg = open('background_filled.csv', 'r')
+train = open('train_labels.csv', 'r')
 bg_train = open('bg_train.csv', 'w')
 bg_test = open('bg_test.csv', 'w')
 
