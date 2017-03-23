@@ -19,5 +19,5 @@ def fillMissing(inputcsv, outputcsv):
     df.to_csv(outputcsv, index=False)
     
 # Usage:
-fillMissing('train_labels.csv', 'output_labels.csv')
-filleddf = pd.read_csv('output_labels.csv', low_memory=False)
+fillMissing('background_sorted.csv', 'background_filled.csv')
+filleddf = pd.read_csv('background_filled.csv', low_memory=False)
