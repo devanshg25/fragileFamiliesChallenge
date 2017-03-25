@@ -77,6 +77,7 @@ def run_classifications(X, y, X_test, labelname):
     X, X_test, n = feature_selection_chi2(X, X_test, y, 100)
     print('{} : {}'.format("Feature Selected X", X.shape))
     print('{} : {}'.format("Feature Selected X_test", X_test.shape))
+    print_line()
 
     # gnb = GaussianNB()
     # start_time = time.time()
@@ -112,6 +113,7 @@ def run_classifications(X, y, X_test, labelname):
     print_classification_stats("Random Forest " + labelname, y, y_train, y_test, runtime)
     cv = cross_val_score(rf, X, y, cv=k_fold)
     print "CV Score: " + str(cv)
+    print_line()
 
     # K NEAREST NEIGHBORS ######
     neigh = KNeighborsClassifier(4)
@@ -123,28 +125,31 @@ def run_classifications(X, y, X_test, labelname):
     print_classification_stats("KNN " + labelname, y, y_train, y_test, runtime)
     cv = cross_val_score(neigh, X, y, cv=k_fold)
     print "CV Score: " + str(cv)
+    print_line()
 
     # Linear SVM ######
-    svc = SVC(kernel='linear', C=0.025)
-    start_time = time.time()
-    svc.fit(X, y)
-    runtime = str(time.time() - start_time)
-    y_train = svc.predict(X)
-    y_test = svc.predict(X_test)
-    print_classification_stats("Linear SVM " + labelname, y, y_train, y_test, runtime)
-    cv = cross_val_score(svc, X, y, cv=k_fold)
-    print "CV Score: " + str(cv)
+    #svc = SVC(kernel='linear', C=0.025)
+    #start_time = time.time()
+    #svc.fit(X, y)
+    #runtime = str(time.time() - start_time)
+    #y_train = svc.predict(X)
+    #y_test = svc.predict(X_test)
+    #print_classification_stats("Linear SVM " + labelname, y, y_train, y_test, runtime)
+    #cv = cross_val_score(svc, X, y, cv=k_fold)
+    #print "CV Score: " + str(cv)
+    #print_line()
 
-    # RBF SVM ######
-    rsvc = SVC(gamma=2, C=1)
-    start_time = time.time()
-    rsvc.fit(X, y)
-    runtime = str(time.time() - start_time)
-    y_train = rsvc.predict(X)
-    y_test = rsvc.predict(X_test)
-    print_classification_stats("RBF SVM " + labelname, y, y_train, y_test, runtime)
-    cv = cross_val_score(rsvc, X, y, cv=k_fold)
-    print "CV Score: " + str(cv)
+    ## RBF SVM ######
+    #rsvc = SVC(gamma=2, C=1)
+    #start_time = time.time()
+    #rsvc.fit(X, y)
+    #runtime = str(time.time() - start_time)
+    #y_train = rsvc.predict(X)
+    #y_test = rsvc.predict(X_test)
+    #print_classification_stats("RBF SVM " + labelname, y, y_train, y_test, runtime)
+    #cv = cross_val_score(rsvc, X, y, cv=k_fold)
+    #print "CV Score: " + str(cv)
+    #print_line()
 
     # Gaussian Process ######
     gp = GaussianProcessClassifier(1.0 * RBF(1.0), warm_start=True)
@@ -156,6 +161,7 @@ def run_classifications(X, y, X_test, labelname):
     print_classification_stats("Gaussian Process " + labelname, y, y_train, y_test, runtime)
     cv = cross_val_score(gp, X, y, cv=k_fold)
     print "CV Score: " + str(cv)
+    print_line()
 
     # Decision Tree ######
     dt = DecisionTreeClassifier()
@@ -167,6 +173,7 @@ def run_classifications(X, y, X_test, labelname):
     print_classification_stats("Decision Tree " + labelname, y, y_train, y_test, runtime)
     cv = cross_val_score(dt, X, y, cv=k_fold)
     print "CV Score: " + str(cv)
+    print_line()
 
     # Neural Net ######
     mlp = MLPClassifier()
@@ -178,6 +185,7 @@ def run_classifications(X, y, X_test, labelname):
     print_classification_stats("Neural Net " + labelname, y, y_train, y_test, runtime)
     cv = cross_val_score(mlp, X, y, cv=k_fold)
     print "CV Score: " + str(cv)
+    print_line()
 
     # AdaBoost Classifier ######
     ab = AdaBoostClassifier()
@@ -189,6 +197,7 @@ def run_classifications(X, y, X_test, labelname):
     print_classification_stats("AdaBoost " + labelname, y, y_train, y_test, runtime)
     cv = cross_val_score(ab, X, y, cv=k_fold)
     print "CV Score: " + str(cv)
+    print_line()
 
     # Naive Bayes ######
     gnb = GaussianNB()
@@ -200,6 +209,7 @@ def run_classifications(X, y, X_test, labelname):
     print_classification_stats("Naive Bayes " + labelname, y, y_train, y_test, runtime)
     cv = cross_val_score(gnb, X, y, cv=k_fold)
     print "CV Score: " + str(cv)
+    print_line()
 
     # QDA ######
     qda = QuadraticDiscriminantAnalysis()
@@ -211,6 +221,7 @@ def run_classifications(X, y, X_test, labelname):
     print_classification_stats("QDA " + labelname, y, y_train, y_test, runtime)
     cv = cross_val_score(qda, X, y, cv=k_fold)
     print "CV Score: " + str(cv)
+    print_line()
 
 
 def run_regressions(X, y, X_test, labelname):
@@ -221,6 +232,7 @@ def run_regressions(X, y, X_test, labelname):
     X, X_test, n = feature_selection_chi2(X, X_test, y_new, 100)
     print('{} : {}'.format("Feature Selected X", X.shape))
     print('{} : {}'.format("Feature Selected X_test", X_test.shape))
+    print_line()
 
 
     # gnb = GaussianNB()
@@ -254,6 +266,7 @@ def run_regressions(X, y, X_test, labelname):
     #print y_train[:100]
     y_test = lr.predict(X_test)
     print_regression_stats("Linear Regression " + labelname, y, y_train, y_test, runtime)
+    print_line()
 
     # Epsilon-Support Vector Regression ######
     svr = SVR()
@@ -263,6 +276,7 @@ def run_regressions(X, y, X_test, labelname):
     y_train = svr.predict(X)
     y_test = svr.predict(X_test)
     print_regression_stats("SVR " + labelname, y, y_train, y_test, runtime)
+    print_line()
 
     # Kernel Ridge Regression ######
     kr = KernelRidge()
@@ -272,6 +286,7 @@ def run_regressions(X, y, X_test, labelname):
     y_train = kr.predict(X)
     y_test = kr.predict(X_test)
     print_regression_stats("Kernel Ridge " + labelname, y, y_train, y_test, runtime)
+    print_line()
 
     # Ridge Regression ######
     r = Ridge()
@@ -281,6 +296,7 @@ def run_regressions(X, y, X_test, labelname):
     y_train = r.predict(X)
     y_test = r.predict(X_test)
     print_regression_stats("Ridge " + labelname, y, y_train, y_test, runtime)
+    print_line()
 
     # Lasso Regression ######
     l = Lasso()
@@ -290,6 +306,7 @@ def run_regressions(X, y, X_test, labelname):
     y_train = l.predict(X)
     y_test = l.predict(X_test)
     print_regression_stats("Lasso " + labelname, y, y_train, y_test, runtime)
+    print_line()
 
     # Elastic Net ######
     el = ElasticNet()
@@ -299,6 +316,7 @@ def run_regressions(X, y, X_test, labelname):
     y_train = el.predict(X)
     y_test = el.predict(X_test)
     print_regression_stats("Elastic Net " + labelname, y, y_train, y_test, runtime)
+    print_line()
 
     # Bayesian Ridge ######
     br = BayesianRidge()
@@ -308,6 +326,7 @@ def run_regressions(X, y, X_test, labelname):
     y_train = br.predict(X)
     y_test = br.predict(X_test)
     print_regression_stats("Bayesian Ridge " + labelname, y, y_train, y_test, runtime)
+    print_line()
 
     # Gaussian Process ######
     gp = ElasticNet()
@@ -317,6 +336,10 @@ def run_regressions(X, y, X_test, labelname):
     y_train = gp.predict(X)
     y_test = gp.predict(X_test)
     print_regression_stats("Gaussian Process " + labelname, y, y_train, y_test, runtime)
+    print_line()
+
+def print_line():
+    print "------------------------------------------------------------------------"
 
 def print_classification_stats(name, y, y_train, y_test, runtime, num_features=None):
 
@@ -342,8 +365,6 @@ def print_classification_stats(name, y, y_train, y_test, runtime, num_features=N
     # Runtime
     print name + " Fitting Runtime: " + runtime
 
-    print "------------------------------------------------------------------------"
-
 def print_regression_stats(name, y, y_train, y_test, runtime, num_features=None):
 
     if num_features is not None:
@@ -354,8 +375,6 @@ def print_regression_stats(name, y, y_train, y_test, runtime, num_features=None)
 
     # Runtime
     print name + " Fitting Runtime: " + runtime
-
-    print "------------------------------------------------------------------------"
 
 def main():
     parser = argparse.ArgumentParser()
@@ -421,18 +440,20 @@ def main():
 
 
     if classify:
-        print("-----------------Eviction-----------------")
+
+        print "------------------------------------------------------------------------"
+        print("-----------------Eviction-----------------------------------------------")
         run_classifications(X, y_eviction, X_test, "Eviction")
-        print("-----------------Job Loss-----------------")
+        print("-----------------Job Loss-----------------------------------------------")
         run_classifications(X, y_jobloss, X_test, "Job Loss")
-        print("---------------Job Training---------------")
+        print("---------------Job Training---------------------------------------------")
         run_classifications(X, y_jobtraining, X_test, "Job Training")
     if regress:
-        print("----------------------Grit---------------------")
+        print("----------------------Grit----------------------------------------------")
         run_regressions(X, y_grit, X_test, "Grit")
-        print("----------------------GPA----------------------")
+        print("----------------------GPA-----------------------------------------------")
         run_regressions(X, y_gpa, X_test, "GPA")
-        print("---------------Material Hardship---------------")
+        print("---------------Material Hardship----------------------------------------")
         run_regressions(X, y_mhardship, X_test, "Material Hardship")
 
 main()
