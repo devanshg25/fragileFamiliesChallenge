@@ -340,12 +340,52 @@ def main():
     classify = args.c
     regress = args.r
 
-    X = np.genfromtxt('bg_train.csv', delimiter=',', dtype=float)
+    try:
+        X = np.load('X.npy')
+        X_test = np.load('X_test.npy')
+        y = np.load('y.npy')
+        print "Loaded Train/Test Data from memory..."
+    except IOError:
+        X = np.genfromtxt('bg_train.csv', delimiter=',', dtype=float)
+        X_test = np.genfromtxt('bg_test.csv', delimiter=',', dtype=float) 
+        y = np.genfromtxt('train_labels_filled.csv', delimiter=',')
+
+        print('{} : {}'.format("Shape of X", X.shape))
+        print('{} : {}'.format("Shape of y", y.shape))
+        # print('{} : {}'.format("Shape of y_label", y_grit.shape))
+        print('{} : {}'.format("Shape of X_test", X_test.shape))
+
+        print('Removing bad columns')
+        cols = []
+        for i in range(X.shape[0]):
+            for j in range(X.shape[1]):
+                if math.isnan(X[i,j]):
+                    if j not in cols:
+                        cols.append(j)
+                        #print X[i,j]
+                        #print ('{},{}'.format(i, j))
+
+        for i in range(X_test.shape[0]):
+            for j in range(X_test.shape[1]):
+                if math.isnan(X_test[i,j]):
+                    if j not in cols:
+                        cols.append(j)
+                        #print X[i,j]
+                        #print ('{},{}'.format(i, j))
+        X = np.delete(X, cols, axis=1)
+        X_test = np.delete(X_test, cols, axis=1)
+        print('Removed ' + str(len(cols)) + ' cols')
+        print('{} : {}'.format("Final shape of X", X.shape))
+        print('{} : {}'.format("Final shape of X_test", X_test.shape))
+
+        np.save('X.npy', X)
+        np.save('X_test.npy', X_test)
+        np.save('y.npy', y)
+        print "Saved Train/Test Data to memory..."
+
     X = X[0:X.shape[0], 100:300]
-    X_test = np.genfromtxt('bg_test.csv', delimiter=',', dtype=float)
     X_test = X_test[0:X_test.shape[0], 100:300]
 
-    y = np.genfromtxt('train_labels_filled.csv', delimiter=',')
     y_grit = y[:,1]
     y_gpa = y[:,2]
     y_mhardship = y[:,3]
@@ -353,33 +393,6 @@ def main():
     y_jobloss = y[:,5]
     y_jobtraining = y[:,6]
 
-    print('{} : {}'.format("Shape of X", X.shape))
-    print('{} : {}'.format("Shape of y", y.shape))
-    print('{} : {}'.format("Shape of y_label", y_grit.shape))
-    print('{} : {}'.format("Shape of X_test", X_test.shape))
-
-    print('Removing bad columns')
-    cols = []
-    for i in range(X.shape[0]):
-        for j in range(X.shape[1]):
-            if math.isnan(X[i,j]):
-                if j not in cols:
-                    cols.append(j)
-                    #print X[i,j]
-                    #print ('{},{}'.format(i, j))
-
-    for i in range(X_test.shape[0]):
-        for j in range(X_test.shape[1]):
-            if math.isnan(X_test[i,j]):
-                if j not in cols:
-                    cols.append(j)
-                    #print X[i,j]
-                    #print ('{},{}'.format(i, j))
-    X = np.delete(X, cols, axis=1)
-    X_test = np.delete(X_test, cols, axis=1)
-    print('Removed ' + str(len(cols)) + ' cols')
-    print('{} : {}'.format("Final shape of X", X.shape))
-    print('{} : {}'.format("Final shape of X_test", X_test.shape))
 
     if classify:
         print("-----------------Eviction-----------------")
