@@ -138,8 +138,11 @@ def run_regressions(X, y, X_test, labelname):
     y_train = lr.predict(X)
     print y_train[:100]
     y_test = lr.predict(X_test)
-
     print_regression_stats("Random Forest " + labelname, y, y_train, y_test, runtime)
+
+    k_fold = KFold(n_splits=3, shuffle=True, random_state=0)
+    cv = cross_val_score(lr, X, y, cv=k_fold)
+    print "CV Score: " + str(cv)
 
 def print_classification_stats(name, y, y_train, y_test, runtime, num_features=None):
 
