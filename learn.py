@@ -8,6 +8,7 @@ import time
 import math
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import KFold, cross_val_score
 
 def feature_selection_imp(train_matrix, test_matrix, train_targets, dictionary_file):
 	clf = ExtraTreesClassifier()
@@ -94,8 +95,11 @@ def run_classifications(X, y, X_test, labelname):
     runtime = str(time.time() - start_time)
     y_train = rf.predict(X)
     y_test = rf.predict(X_test)
-
     print_classification_stats("Random Forest " + labelname, y, y_train, y_test, runtime)
+
+    k_fold = KFold(n_splits=3, shuffle=True, random_state=0)
+    cv = cross_val_score(rf, X, y, cv=k_fold)
+    print "CV Score: " + str(cv)
 
 
 def run_regressions(X, y, X_test, labelname):
@@ -224,7 +228,7 @@ def main():
         np.save('y.npy', y)
         print "Saved Train/Test Data to memory..." 
     
-    
+
     y_grit = y[:,1]
     y_gpa = y[:,2]
     y_mhardship = y[:,3]
