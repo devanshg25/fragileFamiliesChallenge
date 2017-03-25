@@ -192,7 +192,7 @@ def run_regressions(X, y, X_test, labelname):
     y_new = np.multiply(y, 100).astype(int)
 
     # X, X_test, n = feature_selection_chi2(X, X_test, y_new, 2000)
-    X, X_test, n = feature_selection_chi2(X, X_test, y, 100)
+    X, X_test, n = feature_selection_chi2(X, X_test, y_new, 100)
     print('{} : {}'.format("Feature Selected X", X.shape))
     print('{} : {}'.format("Feature Selected X_test", X_test.shape))
 
@@ -383,8 +383,8 @@ def main():
         np.save('y.npy', y)
         print "Saved Train/Test Data to memory..."
 
-    X = X[0:X.shape[0], 100:300]
-    X_test = X_test[0:X_test.shape[0], 100:300]
+    #X = X[0:X.shape[0], 100:300]
+    #X_test = X_test[0:X_test.shape[0], 100:300]
 
     y_grit = y[:,1]
     y_gpa = y[:,2]
