@@ -16,6 +16,9 @@ from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet, Bay
 from sklearn.kernel_ridge import KernelRidge
 import time
 import math
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import KFold, cross_val_score
 
 def feature_selection_imp(train_matrix, test_matrix, train_targets, dictionary_file):
 	clf = ExtraTreesClassifier()
@@ -97,6 +100,8 @@ def run_classifications(X, y, X_test, labelname):
     # threshs.append(thresh)
     # # pr_aucs.append(pr_auc)
 
+    k_fold = KFold(n_splits=3, shuffle=True, random_state=0)
+
     # RANDOM FOREST ######
     rf = RandomForestClassifier()
     start_time = time.time()
@@ -105,6 +110,8 @@ def run_classifications(X, y, X_test, labelname):
     y_train = rf.predict(X)
     y_test = rf.predict(X_test)
     print_classification_stats("Random Forest " + labelname, y, y_train, y_test, runtime)
+    cv = cross_val_score(rf, X, y, cv=k_fold)
+    print "CV Score: " + str(cv)
 
     # K NEAREST NEIGHBORS ######
     neigh = KNeighborsClassifier(4)
@@ -114,6 +121,8 @@ def run_classifications(X, y, X_test, labelname):
     y_train = neigh.predict(X)
     y_test = neigh.predict(X_test)
     print_classification_stats("KNN " + labelname, y, y_train, y_test, runtime)
+    cv = cross_val_score(neigh, X, y, cv=k_fold)
+    print "CV Score: " + str(cv)
 
     # Linear SVM ######
     svc = SVC(kernel='linear', C=0.025)
@@ -123,6 +132,8 @@ def run_classifications(X, y, X_test, labelname):
     y_train = svc.predict(X)
     y_test = svc.predict(X_test)
     print_classification_stats("Linear SVM " + labelname, y, y_train, y_test, runtime)
+    cv = cross_val_score(svc, X, y, cv=k_fold)
+    print "CV Score: " + str(cv)
 
     # RBF SVM ######
     rsvc = SVC(gamma=2, C=1)
@@ -132,6 +143,8 @@ def run_classifications(X, y, X_test, labelname):
     y_train = rsvc.predict(X)
     y_test = rsvc.predict(X_test)
     print_classification_stats("RBF SVM " + labelname, y, y_train, y_test, runtime)
+    cv = cross_val_score(rsvc, X, y, cv=k_fold)
+    print "CV Score: " + str(cv)
 
     # Gaussian Process ######
     gp = GaussianProcessClassifier(1.0 * RBF(1.0), warm_start=True)
@@ -141,6 +154,8 @@ def run_classifications(X, y, X_test, labelname):
     y_train = gp.predict(X)
     y_test = gp.predict(X_test)
     print_classification_stats("Gaussian Process " + labelname, y, y_train, y_test, runtime)
+    cv = cross_val_score(gp, X, y, cv=k_fold)
+    print "CV Score: " + str(cv)
 
     # Decision Tree ######
     dt = DecisionTreeClassifier()
@@ -150,6 +165,8 @@ def run_classifications(X, y, X_test, labelname):
     y_train = dt.predict(X)
     y_test = dt.predict(X_test)
     print_classification_stats("Decision Tree " + labelname, y, y_train, y_test, runtime)
+    cv = cross_val_score(dt, X, y, cv=k_fold)
+    print "CV Score: " + str(cv)
 
     # Neural Net ######
     mlp = MLPClassifier()
@@ -159,6 +176,8 @@ def run_classifications(X, y, X_test, labelname):
     y_train = mlp.predict(X)
     y_test = mlp.predict(X_test)
     print_classification_stats("Neural Net " + labelname, y, y_train, y_test, runtime)
+    cv = cross_val_score(mlp, X, y, cv=k_fold)
+    print "CV Score: " + str(cv)
 
     # AdaBoost Classifier ######
     ab = AdaBoostClassifier()
@@ -168,6 +187,8 @@ def run_classifications(X, y, X_test, labelname):
     y_train = ab.predict(X)
     y_test = ab.predict(X_test)
     print_classification_stats("AdaBoost " + labelname, y, y_train, y_test, runtime)
+    cv = cross_val_score(ab, X, y, cv=k_fold)
+    print "CV Score: " + str(cv)
 
     # Naive Bayes ######
     gnb = GaussianNB()
@@ -177,6 +198,8 @@ def run_classifications(X, y, X_test, labelname):
     y_train = gnb.predict(X)
     y_test = gnb.predict(X_test)
     print_classification_stats("Naive Bayes " + labelname, y, y_train, y_test, runtime)
+    cv = cross_val_score(gnb, X, y, cv=k_fold)
+    print "CV Score: " + str(cv)
 
     # QDA ######
     qda = QuadraticDiscriminantAnalysis()
@@ -186,6 +209,9 @@ def run_classifications(X, y, X_test, labelname):
     y_train = qda.predict(X)
     y_test = qda.predict(X_test)
     print_classification_stats("QDA " + labelname, y, y_train, y_test, runtime)
+    cv = cross_val_score(qda, X, y, cv=k_fold)
+    print "CV Score: " + str(cv)
+
 
 def run_regressions(X, y, X_test, labelname):
 
@@ -347,7 +373,7 @@ def main():
         print "Loaded Train/Test Data from memory..."
     except IOError:
         X = np.genfromtxt('bg_train.csv', delimiter=',', dtype=float)
-        X_test = np.genfromtxt('bg_test.csv', delimiter=',', dtype=float) 
+        X_test = np.genfromtxt('bg_test.csv', delimiter=',', dtype=float)
         y = np.genfromtxt('train_labels_filled.csv', delimiter=',')
 
         print('{} : {}'.format("Shape of X", X.shape))
