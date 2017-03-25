@@ -19,6 +19,7 @@ import math
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import KFold, cross_val_score
+import warnings
 
 def feature_selection_imp(train_matrix, test_matrix, train_targets, dictionary_file):
 	clf = ExtraTreesClassifier()
@@ -257,6 +258,8 @@ def run_regressions(X, y, X_test, labelname):
     # threshs.append(thresh)
     # # pr_aucs.append(pr_auc)
 
+    k_fold = KFold(n_splits=3, shuffle=True, random_state=0)
+
     # Linear Regression ######
     lr = LinearRegression()
     start_time = time.time()
@@ -266,6 +269,8 @@ def run_regressions(X, y, X_test, labelname):
     #print y_train[:100]
     y_test = lr.predict(X_test)
     print_regression_stats("Linear Regression " + labelname, y, y_train, y_test, runtime)
+    cv = cross_val_score(lr, X, y, cv=k_fold, scoring='mean_squared_error')
+    print "CV Score: " + str(cv)
     print_line()
 
     # Epsilon-Support Vector Regression ######
@@ -276,6 +281,8 @@ def run_regressions(X, y, X_test, labelname):
     y_train = svr.predict(X)
     y_test = svr.predict(X_test)
     print_regression_stats("SVR " + labelname, y, y_train, y_test, runtime)
+    cv = cross_val_score(svr, X, y, cv=k_fold, scoring='mean_squared_error')
+    print "CV Score: " + str(cv)
     print_line()
 
     # Kernel Ridge Regression ######
@@ -286,6 +293,8 @@ def run_regressions(X, y, X_test, labelname):
     y_train = kr.predict(X)
     y_test = kr.predict(X_test)
     print_regression_stats("Kernel Ridge " + labelname, y, y_train, y_test, runtime)
+    cv = cross_val_score(kr, X, y, cv=k_fold, scoring='mean_squared_error')
+    print "CV Score: " + str(cv)
     print_line()
 
     # Ridge Regression ######
@@ -296,6 +305,8 @@ def run_regressions(X, y, X_test, labelname):
     y_train = r.predict(X)
     y_test = r.predict(X_test)
     print_regression_stats("Ridge " + labelname, y, y_train, y_test, runtime)
+    cv = cross_val_score(r, X, y, cv=k_fold, scoring='mean_squared_error')
+    print "CV Score: " + str(cv)
     print_line()
 
     # Lasso Regression ######
@@ -306,6 +317,8 @@ def run_regressions(X, y, X_test, labelname):
     y_train = l.predict(X)
     y_test = l.predict(X_test)
     print_regression_stats("Lasso " + labelname, y, y_train, y_test, runtime)
+    cv = cross_val_score(l, X, y, cv=k_fold, scoring='mean_squared_error')
+    print "CV Score: " + str(cv)
     print_line()
 
     # Elastic Net ######
@@ -316,6 +329,8 @@ def run_regressions(X, y, X_test, labelname):
     y_train = el.predict(X)
     y_test = el.predict(X_test)
     print_regression_stats("Elastic Net " + labelname, y, y_train, y_test, runtime)
+    cv = cross_val_score(el, X, y, cv=k_fold, scoring='mean_squared_error')
+    print "CV Score: " + str(cv)
     print_line()
 
     # Bayesian Ridge ######
@@ -326,6 +341,8 @@ def run_regressions(X, y, X_test, labelname):
     y_train = br.predict(X)
     y_test = br.predict(X_test)
     print_regression_stats("Bayesian Ridge " + labelname, y, y_train, y_test, runtime)
+    cv = cross_val_score(br, X, y, cv=k_fold, scoring='mean_squared_error')
+    print "CV Score: " + str(cv)
     print_line()
 
     # Gaussian Process ######
@@ -336,11 +353,9 @@ def run_regressions(X, y, X_test, labelname):
     y_train = gp.predict(X)
     y_test = gp.predict(X_test)
     print_regression_stats("Gaussian Process " + labelname, y, y_train, y_test, runtime)
-    print_line()
-
-    k_fold = KFold(n_splits=3, shuffle=True, random_state=0)
-    cv = cross_val_score(lr, X, y, cv=k_fold)
+    cv = cross_val_score(gp, X, y, cv=k_fold, scoring='mean_squared_error')
     print "CV Score: " + str(cv)
+    print_line()
 
 def print_line():
     print "------------------------------------------------------------------------"
@@ -386,6 +401,8 @@ def main():
     parser.add_argument('--c', default=0, type=int)
     parser.add_argument('--r', default=0, type=int)
     args = parser.parse_args()
+
+    warnings.filterwarnings("ignore")
 
     classify = args.c
     regress = args.r
