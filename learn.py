@@ -450,12 +450,14 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--c', default=0, type=int)
     parser.add_argument('--r', default=0, type=int)
+    parser.add_argument('--w', default=0, type=int)
     args = parser.parse_args()
 
     warnings.filterwarnings("ignore")
 
     classify = args.c
     regress = args.r
+    write = args.w
 
     try:
         X = np.load('X.npy')
@@ -539,10 +541,10 @@ def main():
         predicts = run_regressions(X, y_mhardship, X_test, "Material Hardship")
         p_mhard = predicts['l']
 
-    zipped = zip(cID, p_gpa, p_grit, p_mhard, p_evict, p_jobloss, p_jobtrain)
-    zipped.sort()
-    print(zipped[:10])
-    print_line()
-    print "Writing predictions"
-    write_predictions(zipped)
+    if write:
+        zipped = zip(cID, p_gpa, p_grit, p_mhard, p_evict, p_jobloss, p_jobtrain)
+        zipped.sort()
+        print_line()
+        print "Writing predictions"
+        write_predictions(zipped)
 main()
