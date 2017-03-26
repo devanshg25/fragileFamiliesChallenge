@@ -73,7 +73,7 @@ def feature_selection_mutualinformation(train_matrix, test_matrix, train_targets
 	num_features = len(train_matrix[0])
 	return train_matrix, test_matrix, num_features
 
-def run_classifications(X, y, X_test, labelname):
+def run_classifications(X, y, X_test, labelname, k):
     ret_predictions = {}
 
     X, X_test, n = feature_selection_chi2(X, X_test, y, 2000)
@@ -104,7 +104,7 @@ def run_classifications(X, y, X_test, labelname):
     # threshs.append(thresh)
     # # pr_aucs.append(pr_auc)
 
-    k_fold = KFold(n_splits=5, shuffle=True, random_state=0)
+    k_fold = KFold(n_splits=k, shuffle=True, random_state=0)
 
     # RANDOM FOREST ######
     rf = RandomForestClassifier()
@@ -248,7 +248,7 @@ def run_classifications(X, y, X_test, labelname):
 
     return ret_predictions
 
-def run_regressions(X, y, X_test, labelname):
+def run_regressions(X, y, X_test, labelname, k):
 
     ret_predictions = {}
 
@@ -283,7 +283,7 @@ def run_regressions(X, y, X_test, labelname):
     # threshs.append(thresh)
     # # pr_aucs.append(pr_auc)
 
-    k_fold = KFold(n_splits=3, shuffle=True, random_state=0)
+    k_fold = KFold(n_splits=k, shuffle=True, random_state=0)
 
     # Linear Regression ######
     lr = LinearRegression()
@@ -451,6 +451,7 @@ def main():
     parser.add_argument('--c', default=0, type=int)
     parser.add_argument('--r', default=0, type=int)
     parser.add_argument('--w', default=0, type=int)
+    parser.add_argument('--k', default=3, type=int)
     args = parser.parse_args()
 
     warnings.filterwarnings("ignore")
@@ -458,6 +459,7 @@ def main():
     classify = args.c
     regress = args.r
     write = args.w
+    k = args.k
 
     try:
         X = np.load('X.npy')
@@ -521,24 +523,24 @@ def main():
     if classify:
         print "------------------------------------------------------------------------"
         print("-----------------Eviction-----------------------------------------------")
-        predicts = run_classifications(X, y_eviction, X_test, "Eviction")
+        predicts = run_classifications(X, y_eviction, X_test, "Eviction", k)
         p_evict = predicts['rf']
         print("-----------------Job Loss-----------------------------------------------")
-        predicts = run_classifications(X, y_jobloss, X_test, "Job Loss")
+        predicts = run_classifications(X, y_jobloss, X_test, "Job Loss", k)
         p_jobloss = predicts['rf']
         print("---------------Job Training---------------------------------------------")
-        predicts = run_classifications(X, y_jobtraining, X_test, "Job Training")
+        predicts = run_classifications(X, y_jobtraining, X_test, "Job Training", k)
         p_jobtrain = predicts['rf']
     if regress:
         print "------------------------------------------------------------------------"
         print("----------------------Grit----------------------------------------------")
-        predicts = run_regressions(X, y_grit, X_test, "Grit")
+        predicts = run_regressions(X, y_grit, X_test, "Grit", k)
         p_grit = predicts['l']
         print("----------------------GPA-----------------------------------------------")
-        predicts = run_regressions(X, y_gpa, X_test, "GPA")
+        predicts = run_regressions(X, y_gpa, X_test, "GPA", k)
         p_gpa = predicts['l']
         print("---------------Material Hardship----------------------------------------")
-        predicts = run_regressions(X, y_mhardship, X_test, "Material Hardship")
+        predicts = run_regressions(X, y_mhardship, X_test, "Material Hardship", k)
         p_mhard = predicts['l']
 
     if write:
