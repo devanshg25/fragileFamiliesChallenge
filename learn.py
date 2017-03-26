@@ -12,13 +12,11 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 from sklearn.naive_bayes import MultinomialNB, GaussianNB
-from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet, BayesianRidge
+from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet, BayesianRidge, LogisticRegression
 from sklearn.kernel_ridge import KernelRidge
+from sklearn.model_selection import KFold, cross_val_score
 import time
 import math
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import KFold, cross_val_score
 import csv
 import warnings
 
@@ -105,6 +103,34 @@ def run_classifications(X, y, X_test, labelname, k, features):
     # # pr_aucs.append(pr_auc)
 
     k_fold = KFold(n_splits=k, shuffle=True, random_state=0)
+
+    # L2 LOGISTIC REGRESSION ######
+    lr2 = LogisticRegression()
+    start_time = time.time()
+    lr2.fit(X, y)
+    runtime = str(time.time() - start_time)
+    y_train = lr2.predict(X)
+    y_test = lr2.predict(X_test)
+    print_classification_stats("L2 Logistic Regression " + labelname, y, y_train, y_test, runtime)
+    cv = cross_val_score(lr2, X, y, cv=k_fold)
+    print "CV Score: " + str(cv)
+    print "CV Average: " + str(sum(cv)/float(len(cv)))
+    print_line()
+    ret_predictions['lr2'] = np.concatenate((y_train, y_test))
+
+    # L1 LOGISTIC REGRESSION ######
+    lr1 = LogisticRegression(penalty='l1')
+    start_time = time.time()
+    lr1.fit(X, y)
+    runtime = str(time.time() - start_time)
+    y_train = lr1.predict(X)
+    y_test = lr1.predict(X_test)
+    print_classification_stats("L2 Logistic Regression " + labelname, y, y_train, y_test, runtime)
+    cv = cross_val_score(lr1, X, y, cv=k_fold)
+    print "CV Score: " + str(cv)
+    print "CV Average: " + str(sum(cv)/float(len(cv)))
+    print_line()
+    ret_predictions['lr1'] = np.concatenate((y_train, y_test))
 
     # RANDOM FOREST ######
     rf = RandomForestClassifier()
@@ -522,6 +548,13 @@ def main():
     y_jobloss = y[:,5]
     y_jobtraining = y[:,6]
 
+    p_evict = []
+    p_jobloss = []
+    p_jobtrain = []
+    p_grit = []
+    p_gpa = []
+    p_mhard = []
+
     if classify:
         print "------------------------------------------------------------------------"
         print("-----------------Eviction-----------------------------------------------")
@@ -544,6 +577,15 @@ def main():
         print("---------------Material Hardship----------------------------------------")
         predicts = run_regressions(X, y_mhardship, X_test, "Material Hardship", k, features)
         p_mhard = predicts['l']
+
+    if len(p_evict) == 0:
+        p_evict = np.ones(len(p_grit))
+        p_jobloss = np.ones(len(p_grit))
+        p_jobtrain = np.ones(len(p_grit))
+    if len(p_grit) == 0:
+        p_grit = np.ones(len(p_evict))
+        p_gpa = np.ones(len(p_evict))
+        p_mhard = np.ones(len(p_evict))
 
     if write:
         zipped = zip(cID, p_gpa, p_grit, p_mhard, p_evict, p_jobloss, p_jobtrain)
