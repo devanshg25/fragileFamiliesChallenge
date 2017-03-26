@@ -19,6 +19,7 @@ import math
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import KFold, cross_val_score
+import csv
 
 def feature_selection_imp(train_matrix, test_matrix, train_targets, dictionary_file):
 	clf = ExtraTreesClassifier()
@@ -72,9 +73,10 @@ def feature_selection_mutualinformation(train_matrix, test_matrix, train_targets
 	return train_matrix, test_matrix, num_features
 
 def run_classifications(X, y, X_test, labelname):
+    ret_predictions = {}
 
-    # X, X_test, n = feature_selection_chi2(X, X_test, y, 2000)
-    X, X_test, n = feature_selection_chi2(X, X_test, y, 100)
+    X, X_test, n = feature_selection_chi2(X, X_test, y, 2000)
+    #X, X_test, n = feature_selection_chi2(X, X_test, y, 100)
     print('{} : {}'.format("Feature Selected X", X.shape))
     print('{} : {}'.format("Feature Selected X_test", X_test.shape))
     print_line()
@@ -101,7 +103,7 @@ def run_classifications(X, y, X_test, labelname):
     # threshs.append(thresh)
     # # pr_aucs.append(pr_auc)
 
-    k_fold = KFold(n_splits=3, shuffle=True, random_state=0)
+    k_fold = KFold(n_splits=5, shuffle=True, random_state=0)
 
     # RANDOM FOREST ######
     rf = RandomForestClassifier()
@@ -113,7 +115,9 @@ def run_classifications(X, y, X_test, labelname):
     print_classification_stats("Random Forest " + labelname, y, y_train, y_test, runtime)
     cv = cross_val_score(rf, X, y, cv=k_fold)
     print "CV Score: " + str(cv)
+    print "CV Average: " + str(sum(cv)/float(len(cv)))
     print_line()
+    ret_predictions['rf'] = np.concatenate((y_train, y_test))
 
     # K NEAREST NEIGHBORS ######
     neigh = KNeighborsClassifier(4)
@@ -125,7 +129,9 @@ def run_classifications(X, y, X_test, labelname):
     print_classification_stats("KNN " + labelname, y, y_train, y_test, runtime)
     cv = cross_val_score(neigh, X, y, cv=k_fold)
     print "CV Score: " + str(cv)
+    print "CV Average: " + str(sum(cv)/float(len(cv)))
     print_line()
+    ret_predictions['knn'] = np.concatenate((y_train, y_test))
 
     # Linear SVM ######
     #svc = SVC(kernel='linear', C=0.025)
@@ -137,7 +143,9 @@ def run_classifications(X, y, X_test, labelname):
     #print_classification_stats("Linear SVM " + labelname, y, y_train, y_test, runtime)
     #cv = cross_val_score(svc, X, y, cv=k_fold)
     #print "CV Score: " + str(cv)
+    #print "CV Average: " + str(sum(cv)/float(len(cv)))
     #print_line()
+    #ret_predictions['svc'] = np.concatenate((y_train, y_test))
 
     ## RBF SVM ######
     #rsvc = SVC(gamma=2, C=1)
@@ -149,7 +157,9 @@ def run_classifications(X, y, X_test, labelname):
     #print_classification_stats("RBF SVM " + labelname, y, y_train, y_test, runtime)
     #cv = cross_val_score(rsvc, X, y, cv=k_fold)
     #print "CV Score: " + str(cv)
+    #print "CV Average: " + str(sum(cv)/float(len(cv)))
     #print_line()
+    #ret_predictions['rbf'] = np.concatenate((y_train, y_test))
 
     # Gaussian Process ######
     gp = GaussianProcessClassifier(1.0 * RBF(1.0), warm_start=True)
@@ -161,7 +171,9 @@ def run_classifications(X, y, X_test, labelname):
     print_classification_stats("Gaussian Process " + labelname, y, y_train, y_test, runtime)
     cv = cross_val_score(gp, X, y, cv=k_fold)
     print "CV Score: " + str(cv)
+    print "CV Average: " + str(sum(cv)/float(len(cv)))
     print_line()
+    ret_predictions['gp'] = np.concatenate((y_train, y_test))
 
     # Decision Tree ######
     dt = DecisionTreeClassifier()
@@ -173,7 +185,9 @@ def run_classifications(X, y, X_test, labelname):
     print_classification_stats("Decision Tree " + labelname, y, y_train, y_test, runtime)
     cv = cross_val_score(dt, X, y, cv=k_fold)
     print "CV Score: " + str(cv)
+    print "CV Average: " + str(sum(cv)/float(len(cv)))
     print_line()
+    ret_predictions['dt'] = np.concatenate((y_train, y_test))
 
     # Neural Net ######
     mlp = MLPClassifier()
@@ -185,7 +199,9 @@ def run_classifications(X, y, X_test, labelname):
     print_classification_stats("Neural Net " + labelname, y, y_train, y_test, runtime)
     cv = cross_val_score(mlp, X, y, cv=k_fold)
     print "CV Score: " + str(cv)
+    print "CV Average: " + str(sum(cv)/float(len(cv)))
     print_line()
+    ret_predictions['mlp'] = np.concatenate((y_train, y_test))
 
     # AdaBoost Classifier ######
     ab = AdaBoostClassifier()
@@ -197,7 +213,9 @@ def run_classifications(X, y, X_test, labelname):
     print_classification_stats("AdaBoost " + labelname, y, y_train, y_test, runtime)
     cv = cross_val_score(ab, X, y, cv=k_fold)
     print "CV Score: " + str(cv)
+    print "CV Average: " + str(sum(cv)/float(len(cv)))
     print_line()
+    ret_predictions['ab'] = np.concatenate((y_train, y_test))
 
     # Naive Bayes ######
     gnb = GaussianNB()
@@ -209,7 +227,9 @@ def run_classifications(X, y, X_test, labelname):
     print_classification_stats("Naive Bayes " + labelname, y, y_train, y_test, runtime)
     cv = cross_val_score(gnb, X, y, cv=k_fold)
     print "CV Score: " + str(cv)
+    print "CV Average: " + str(sum(cv)/float(len(cv)))
     print_line()
+    ret_predictions['gnb'] = np.concatenate((y_train, y_test))
 
     # QDA ######
     qda = QuadraticDiscriminantAnalysis()
@@ -221,15 +241,20 @@ def run_classifications(X, y, X_test, labelname):
     print_classification_stats("QDA " + labelname, y, y_train, y_test, runtime)
     cv = cross_val_score(qda, X, y, cv=k_fold)
     print "CV Score: " + str(cv)
+    print "CV Average: " + str(sum(cv)/float(len(cv)))
     print_line()
+    ret_predictions['qda'] = np.concatenate((y_train, y_test))
 
+    return ret_predictions
 
 def run_regressions(X, y, X_test, labelname):
 
+    ret_predictions = {}
+
     y_new = np.multiply(y, 100).astype(int)
 
-    # X, X_test, n = feature_selection_chi2(X, X_test, y_new, 2000)
-    X, X_test, n = feature_selection_chi2(X, X_test, y_new, 100)
+    X, X_test, n = feature_selection_chi2(X, X_test, y_new, 2000)
+    #X, X_test, n = feature_selection_chi2(X, X_test, y_new, 100)
     print('{} : {}'.format("Feature Selected X", X.shape))
     print('{} : {}'.format("Feature Selected X_test", X_test.shape))
     print_line()
@@ -267,6 +292,7 @@ def run_regressions(X, y, X_test, labelname):
     y_test = lr.predict(X_test)
     print_regression_stats("Linear Regression " + labelname, y, y_train, y_test, runtime)
     print_line()
+    ret_predictions['lr'] = np.concatenate((y_train, y_test))
 
     # Epsilon-Support Vector Regression ######
     svr = SVR()
@@ -277,6 +303,7 @@ def run_regressions(X, y, X_test, labelname):
     y_test = svr.predict(X_test)
     print_regression_stats("SVR " + labelname, y, y_train, y_test, runtime)
     print_line()
+    ret_predictions['svr'] = np.concatenate((y_train, y_test))
 
     # Kernel Ridge Regression ######
     kr = KernelRidge()
@@ -287,6 +314,7 @@ def run_regressions(X, y, X_test, labelname):
     y_test = kr.predict(X_test)
     print_regression_stats("Kernel Ridge " + labelname, y, y_train, y_test, runtime)
     print_line()
+    ret_predictions['kr'] = np.concatenate((y_train, y_test))
 
     # Ridge Regression ######
     r = Ridge()
@@ -297,6 +325,7 @@ def run_regressions(X, y, X_test, labelname):
     y_test = r.predict(X_test)
     print_regression_stats("Ridge " + labelname, y, y_train, y_test, runtime)
     print_line()
+    ret_predictions['r'] = np.concatenate((y_train, y_test))
 
     # Lasso Regression ######
     l = Lasso()
@@ -307,6 +336,7 @@ def run_regressions(X, y, X_test, labelname):
     y_test = l.predict(X_test)
     print_regression_stats("Lasso " + labelname, y, y_train, y_test, runtime)
     print_line()
+    ret_predictions['l'] = np.concatenate((y_train, y_test))
 
     # Elastic Net ######
     el = ElasticNet()
@@ -317,6 +347,7 @@ def run_regressions(X, y, X_test, labelname):
     y_test = el.predict(X_test)
     print_regression_stats("Elastic Net " + labelname, y, y_train, y_test, runtime)
     print_line()
+    ret_predictions['el'] = np.concatenate((y_train, y_test))
 
     # Bayesian Ridge ######
     br = BayesianRidge()
@@ -327,6 +358,7 @@ def run_regressions(X, y, X_test, labelname):
     y_test = br.predict(X_test)
     print_regression_stats("Bayesian Ridge " + labelname, y, y_train, y_test, runtime)
     print_line()
+    ret_predictions['br'] = np.concatenate((y_train, y_test))
 
     # Gaussian Process ######
     gp = ElasticNet()
@@ -337,6 +369,9 @@ def run_regressions(X, y, X_test, labelname):
     y_test = gp.predict(X_test)
     print_regression_stats("Gaussian Process " + labelname, y, y_train, y_test, runtime)
     print_line()
+    ret_predictions['gp'] = np.concatenate((y_train, y_test))
+
+    return ret_predictions
 
 def print_line():
     print "------------------------------------------------------------------------"
@@ -376,6 +411,13 @@ def print_regression_stats(name, y, y_train, y_test, runtime, num_features=None)
     # Runtime
     print name + " Fitting Runtime: " + runtime
 
+def write_predictions(rows):
+    with open('predictions.csv', 'wb') as f:
+        w = csv.writer(f)
+        w.writerow(("challengeID", "gpa", "grit", "materialHardship", "eviction", "layoff", "jobTraining"))
+        for row in rows:
+            w.writerow(row)
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--c', default=0, type=int)
@@ -389,11 +431,16 @@ def main():
         X = np.load('X.npy')
         X_test = np.load('X_test.npy')
         y = np.load('y.npy')
+        cID = np.load('cID.npy')
         print "Loaded Train/Test Data from memory..."
     except IOError:
         X = np.genfromtxt('bg_train.csv', delimiter=',', dtype=float)
         X_test = np.genfromtxt('bg_test.csv', delimiter=',', dtype=float)
         y = np.genfromtxt('train_labels_filled.csv', delimiter=',')
+
+        cID = np.concatenate((X[:,-1],X_test[:,-1]))
+        print cID.shape
+        print cID[:100]
 
         print('{} : {}'.format("Shape of X", X.shape))
         print('{} : {}'.format("Shape of y", y.shape))
@@ -426,6 +473,7 @@ def main():
         np.save('X.npy', X)
         np.save('X_test.npy', X_test)
         np.save('y.npy', y)
+        np.save('cID.npy', cID)
         print "Saved Train/Test Data to memory..."
 
     #X = X[0:X.shape[0], 100:300]
@@ -438,22 +486,33 @@ def main():
     y_jobloss = y[:,5]
     y_jobtraining = y[:,6]
 
-
     if classify:
-
         print "------------------------------------------------------------------------"
         print("-----------------Eviction-----------------------------------------------")
-        run_classifications(X, y_eviction, X_test, "Eviction")
+        predicts = run_classifications(X, y_eviction, X_test, "Eviction")
+        p_evict = predicts['rf']
         print("-----------------Job Loss-----------------------------------------------")
-        run_classifications(X, y_jobloss, X_test, "Job Loss")
+        predicts = run_classifications(X, y_jobloss, X_test, "Job Loss")
+        p_jobloss = predicts['rf']
         print("---------------Job Training---------------------------------------------")
-        run_classifications(X, y_jobtraining, X_test, "Job Training")
+        predicts = run_classifications(X, y_jobtraining, X_test, "Job Training")
+        p_jobtrain = predicts['rf']
     if regress:
+        print "------------------------------------------------------------------------"
         print("----------------------Grit----------------------------------------------")
-        run_regressions(X, y_grit, X_test, "Grit")
+        predicts = run_regressions(X, y_grit, X_test, "Grit")
+        p_grit = predicts['l']
         print("----------------------GPA-----------------------------------------------")
-        run_regressions(X, y_gpa, X_test, "GPA")
+        predicts = run_regressions(X, y_gpa, X_test, "GPA")
+        p_gpa = predicts['l']
         print("---------------Material Hardship----------------------------------------")
-        run_regressions(X, y_mhardship, X_test, "Material Hardship")
+        predicts = run_regressions(X, y_mhardship, X_test, "Material Hardship")
+        p_mhard = predicts['l']
 
+    zipped = zip(cID, p_gpa, p_grit, p_mhard, p_evict, p_jobloss, p_jobtrain)
+    zipped.sort()
+    print(zipped[:10])
+    print_line()
+    print "Writing predictions"
+    write_predictions(zipped)
 main()
