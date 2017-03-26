@@ -57,12 +57,16 @@ def feature_selection_imp(train_matrix, test_matrix, train_targets, dictionary_f
 
 	return train_matrix, test_matrix, num_features
 
-def feature_selection_chi2(train_matrix, test_matrix, train_targets, k_best):
-	k = SelectKBest(chi2, k=k_best)
-	train_matrix = k.fit_transform(train_matrix, train_targets)
-	test_matrix = k.transform(test_matrix)
-	num_features = len(test_matrix[0])
-	return train_matrix, test_matrix, num_features
+def feature_selection_chi2(train_matrix, test_matrix, train_targets, k_best, headers):
+    k = SelectKBest(chi2, k=k_best)
+    train_matrix = k.fit_transform(train_matrix, train_targets)
+    test_matrix = k.transform(test_matrix)
+    num_features = len(test_matrix[0])
+    indices = k.get_support(indices=True)
+    print "Features Selected:"
+    for i in indices:
+        print headers[i] + " "
+    return train_matrix, test_matrix, num_features
 
 def feature_selection_mutualinformation(train_matrix, test_matrix, train_targets, dictionary_file):
 	mi = SelectKBest(mutual_info_classif, k=200)
@@ -71,10 +75,10 @@ def feature_selection_mutualinformation(train_matrix, test_matrix, train_targets
 	num_features = len(train_matrix[0])
 	return train_matrix, test_matrix, num_features
 
-def run_classifications(X, y, X_test, labelname, k, features):
+def run_classifications(X, y, X_test, labelname, k, features, headers):
     ret_predictions = {}
 
-    X, X_test, n = feature_selection_chi2(X, X_test, y, features)
+    X, X_test, n = feature_selection_chi2(X, X_test, y, features, headers)
     #X, X_test, n = feature_selection_chi2(X, X_test, y, 100)
     print('{} : {}'.format("Feature Selected X", X.shape))
     print('{} : {}'.format("Feature Selected X_test", X_test.shape))
@@ -274,13 +278,13 @@ def run_classifications(X, y, X_test, labelname, k, features):
 
     return ret_predictions
 
-def run_regressions(X, y, X_test, labelname, k, features):
+def run_regressions(X, y, X_test, labelname, k, features, headers):
 
     ret_predictions = {}
 
     y_new = np.multiply(y, 100).astype(int)
 
-    X, X_test, n = feature_selection_chi2(X, X_test, y_new, features)
+    X, X_test, n = feature_selection_chi2(X, X_test, y_new, features, headers)
     #X, X_test, n = feature_selection_chi2(X, X_test, y_new, 100)
     print('{} : {}'.format("Feature Selected X", X.shape))
     print('{} : {}'.format("Feature Selected X_test", X_test.shape))
@@ -312,19 +316,19 @@ def run_regressions(X, y, X_test, labelname, k, features):
     k_fold = KFold(n_splits=k, shuffle=True, random_state=0)
 
     # Linear Regression ######
-    lr = LinearRegression()
-    start_time = time.time()
-    lr.fit(X, y)
-    runtime = str(time.time() - start_time)
-    y_train = lr.predict(X)
-    #print y_train[:100]
-    y_test = lr.predict(X_test)
-    print_regression_stats("Linear Regression " + labelname, y, y_train, y_test, runtime)
-    cv = cross_val_score(lr, X, y, cv=k_fold, scoring='mean_squared_error')
-    print "CV Score: " + str(cv)
-    print "CV Average: " + str(sum(cv)/float(len(cv)))
-    print_line()
-    ret_predictions['lr'] = np.concatenate((y_train, y_test))
+    # lr = LinearRegression()
+    # start_time = time.time()
+    # lr.fit(X, y)
+    # runtime = str(time.time() - start_time)
+    # y_train = lr.predict(X)
+    # #print y_train[:100]
+    # y_test = lr.predict(X_test)
+    # print_regression_stats("Linear Regression " + labelname, y, y_train, y_test, runtime)
+    # cv = cross_val_score(lr, X, y, cv=k_fold, scoring='mean_squared_error')
+    # print "CV Score: " + str(cv)
+    # print "CV Average: " + str(sum(cv)/float(len(cv)))
+    # print_line()
+    # ret_predictions['lr'] = np.concatenate((y_train, y_test))
 
     # Epsilon-Support Vector Regression ######
     svr = SVR()
@@ -341,88 +345,88 @@ def run_regressions(X, y, X_test, labelname, k, features):
     ret_predictions['svr'] = np.concatenate((y_train, y_test))
 
     # Kernel Ridge Regression ######
-    kr = KernelRidge()
-    start_time = time.time()
-    kr.fit(X, y)
-    runtime = str(time.time() - start_time)
-    y_train = kr.predict(X)
-    y_test = kr.predict(X_test)
-    print_regression_stats("Kernel Ridge " + labelname, y, y_train, y_test, runtime)
-    cv = cross_val_score(kr, X, y, cv=k_fold, scoring='mean_squared_error')
-    print "CV Score: " + str(cv)
-    print "CV Average: " + str(sum(cv)/float(len(cv)))
-    print_line()
-    ret_predictions['kr'] = np.concatenate((y_train, y_test))
+    # kr = KernelRidge()
+    # start_time = time.time()
+    # kr.fit(X, y)
+    # runtime = str(time.time() - start_time)
+    # y_train = kr.predict(X)
+    # y_test = kr.predict(X_test)
+    # print_regression_stats("Kernel Ridge " + labelname, y, y_train, y_test, runtime)
+    # cv = cross_val_score(kr, X, y, cv=k_fold, scoring='mean_squared_error')
+    # print "CV Score: " + str(cv)
+    # print "CV Average: " + str(sum(cv)/float(len(cv)))
+    # print_line()
+    # ret_predictions['kr'] = np.concatenate((y_train, y_test))
 
     # Ridge Regression ######
-    r = Ridge()
-    start_time = time.time()
-    r.fit(X, y)
-    runtime = str(time.time() - start_time)
-    y_train = r.predict(X)
-    y_test = r.predict(X_test)
-    print_regression_stats("Ridge " + labelname, y, y_train, y_test, runtime)
-    cv = cross_val_score(r, X, y, cv=k_fold, scoring='mean_squared_error')
-    print "CV Score: " + str(cv)
-    print "CV Average: " + str(sum(cv)/float(len(cv)))
-    print_line()
-    ret_predictions['r'] = np.concatenate((y_train, y_test))
+    # r = Ridge()
+    # start_time = time.time()
+    # r.fit(X, y)
+    # runtime = str(time.time() - start_time)
+    # y_train = r.predict(X)
+    # y_test = r.predict(X_test)
+    # print_regression_stats("Ridge " + labelname, y, y_train, y_test, runtime)
+    # cv = cross_val_score(r, X, y, cv=k_fold, scoring='mean_squared_error')
+    # print "CV Score: " + str(cv)
+    # print "CV Average: " + str(sum(cv)/float(len(cv)))
+    # print_line()
+    # ret_predictions['r'] = np.concatenate((y_train, y_test))
 
     # Lasso Regression ######
-    l = Lasso()
-    start_time = time.time()
-    l.fit(X, y)
-    runtime = str(time.time() - start_time)
-    y_train = l.predict(X)
-    y_test = l.predict(X_test)
-    print_regression_stats("Lasso " + labelname, y, y_train, y_test, runtime)
-    cv = cross_val_score(l, X, y, cv=k_fold, scoring='mean_squared_error')
-    print "CV Score: " + str(cv)
-    print "CV Average: " + str(sum(cv)/float(len(cv)))
-    print_line()
-    ret_predictions['l'] = np.concatenate((y_train, y_test))
+    # l = Lasso()
+    # start_time = time.time()
+    # l.fit(X, y)
+    # runtime = str(time.time() - start_time)
+    # y_train = l.predict(X)
+    # y_test = l.predict(X_test)
+    # print_regression_stats("Lasso " + labelname, y, y_train, y_test, runtime)
+    # cv = cross_val_score(l, X, y, cv=k_fold, scoring='mean_squared_error')
+    # print "CV Score: " + str(cv)
+    # print "CV Average: " + str(sum(cv)/float(len(cv)))
+    # print_line()
+    # ret_predictions['l'] = np.concatenate((y_train, y_test))
 
     # Elastic Net ######
-    el = ElasticNet()
-    start_time = time.time()
-    el.fit(X, y)
-    runtime = str(time.time() - start_time)
-    y_train = el.predict(X)
-    y_test = el.predict(X_test)
-    print_regression_stats("Elastic Net " + labelname, y, y_train, y_test, runtime)
-    cv = cross_val_score(el, X, y, cv=k_fold, scoring='mean_squared_error')
-    print "CV Score: " + str(cv)
-    print "CV Average: " + str(sum(cv)/float(len(cv)))
-    print_line()
-    ret_predictions['el'] = np.concatenate((y_train, y_test))
+    # el = ElasticNet()
+    # start_time = time.time()
+    # el.fit(X, y)
+    # runtime = str(time.time() - start_time)
+    # y_train = el.predict(X)
+    # y_test = el.predict(X_test)
+    # print_regression_stats("Elastic Net " + labelname, y, y_train, y_test, runtime)
+    # cv = cross_val_score(el, X, y, cv=k_fold, scoring='mean_squared_error')
+    # print "CV Score: " + str(cv)
+    # print "CV Average: " + str(sum(cv)/float(len(cv)))
+    # print_line()
+    # ret_predictions['el'] = np.concatenate((y_train, y_test))
 
     # Bayesian Ridge ######
-    br = BayesianRidge()
-    start_time = time.time()
-    br.fit(X, y)
-    runtime = str(time.time() - start_time)
-    y_train = br.predict(X)
-    y_test = br.predict(X_test)
-    print_regression_stats("Bayesian Ridge " + labelname, y, y_train, y_test, runtime)
-    cv = cross_val_score(br, X, y, cv=k_fold, scoring='mean_squared_error')
-    print "CV Score: " + str(cv)
-    print "CV Average: " + str(sum(cv)/float(len(cv)))
-    print_line()
-    ret_predictions['br'] = np.concatenate((y_train, y_test))
+    # br = BayesianRidge()
+    # start_time = time.time()
+    # br.fit(X, y)
+    # runtime = str(time.time() - start_time)
+    # y_train = br.predict(X)
+    # y_test = br.predict(X_test)
+    # print_regression_stats("Bayesian Ridge " + labelname, y, y_train, y_test, runtime)
+    # cv = cross_val_score(br, X, y, cv=k_fold, scoring='mean_squared_error')
+    # print "CV Score: " + str(cv)
+    # print "CV Average: " + str(sum(cv)/float(len(cv)))
+    # print_line()
+    # ret_predictions['br'] = np.concatenate((y_train, y_test))
 
     # Gaussian Process ######
-    gp = ElasticNet()
-    start_time = time.time()
-    gp.fit(X, y)
-    runtime = str(time.time() - start_time)
-    y_train = gp.predict(X)
-    y_test = gp.predict(X_test)
-    print_regression_stats("Gaussian Process " + labelname, y, y_train, y_test, runtime)
-    cv = cross_val_score(gp, X, y, cv=k_fold, scoring='mean_squared_error')
-    print "CV Score: " + str(cv)
-    print "CV Average: " + str(sum(cv)/float(len(cv)))
-    print_line()
-    ret_predictions['gp'] = np.concatenate((y_train, y_test))
+    # gp = ElasticNet()
+    # start_time = time.time()
+    # gp.fit(X, y)
+    # runtime = str(time.time() - start_time)
+    # y_train = gp.predict(X)
+    # y_test = gp.predict(X_test)
+    # print_regression_stats("Gaussian Process " + labelname, y, y_train, y_test, runtime)
+    # cv = cross_val_score(gp, X, y, cv=k_fold, scoring='mean_squared_error')
+    # print "CV Score: " + str(cv)
+    # print "CV Average: " + str(sum(cv)/float(len(cv)))
+    # print_line()
+    # ret_predictions['gp'] = np.concatenate((y_train, y_test))
 
     return ret_predictions
 
@@ -494,11 +498,15 @@ def main():
         X_test = np.load('X_test.npy')
         y = np.load('y.npy')
         cID = np.load('cID.npy')
+        headers = np.load('headers.npy')
         print "Loaded Train/Test Data from memory..."
     except IOError:
         X = np.genfromtxt('bg_train.csv', delimiter=',', dtype=float)
         X_test = np.genfromtxt('bg_test.csv', delimiter=',', dtype=float)
         y = np.genfromtxt('train_labels_filled.csv', delimiter=',')
+        bg = open('background_filled.csv', 'r')
+        headers = bg.readline().split(',')
+        headers = np.asarray(headers)
 
         cID = np.concatenate((X[:,-1],X_test[:,-1]))
         print cID.shape
@@ -508,6 +516,7 @@ def main():
         print('{} : {}'.format("Shape of y", y.shape))
         # print('{} : {}'.format("Shape of y_label", y_grit.shape))
         print('{} : {}'.format("Shape of X_test", X_test.shape))
+        print('{} : {}'.format("Shape of headers", headers.shape)) 
 
         print('Removing bad columns')
         cols = []
@@ -528,14 +537,17 @@ def main():
                         #print ('{},{}'.format(i, j))
         X = np.delete(X, cols, axis=1)
         X_test = np.delete(X_test, cols, axis=1)
+        headers = np.delete(headers, cols)
         print('Removed ' + str(len(cols)) + ' cols')
         print('{} : {}'.format("Final shape of X", X.shape))
         print('{} : {}'.format("Final shape of X_test", X_test.shape))
+        print('{} : {}'.format("Final shape of headers", headers.shape))
 
         np.save('X.npy', X)
         np.save('X_test.npy', X_test)
         np.save('y.npy', y)
         np.save('cID.npy', cID)
+        np.save('headers.npy', headers)
         print "Saved Train/Test Data to memory..."
 
     #X = X[0:X.shape[0], 100:300]
@@ -558,25 +570,25 @@ def main():
     if classify:
         print "------------------------------------------------------------------------"
         print("-----------------Eviction-----------------------------------------------")
-        predicts = run_classifications(X, y_eviction, X_test, "Eviction", k, features)
+        predicts = run_classifications(X, y_eviction, X_test, "Eviction", k, features, headers)
         p_evict = predicts['rf']
         print("-----------------Job Loss-----------------------------------------------")
-        predicts = run_classifications(X, y_jobloss, X_test, "Job Loss", k, features)
+        predicts = run_classifications(X, y_jobloss, X_test, "Job Loss", k, features, headers)
         p_jobloss = predicts['rf']
         print("---------------Job Training---------------------------------------------")
-        predicts = run_classifications(X, y_jobtraining, X_test, "Job Training", k, features)
+        predicts = run_classifications(X, y_jobtraining, X_test, "Job Training", k, features, headers)
         p_jobtrain = predicts['rf']
     if regress:
         print "------------------------------------------------------------------------"
         print("----------------------Grit----------------------------------------------")
-        predicts = run_regressions(X, y_grit, X_test, "Grit", k, features)
-        p_grit = predicts['l']
+        predicts = run_regressions(X, y_grit, X_test, "Grit", k, features, headers)
+        p_grit = predicts['svr']
         print("----------------------GPA-----------------------------------------------")
-        predicts = run_regressions(X, y_gpa, X_test, "GPA", k, features)
-        p_gpa = predicts['l']
+        predicts = run_regressions(X, y_gpa, X_test, "GPA", k, features, headers)
+        p_gpa = predicts['svr']
         print("---------------Material Hardship----------------------------------------")
-        predicts = run_regressions(X, y_mhardship, X_test, "Material Hardship", k, features)
-        p_mhard = predicts['l']
+        predicts = run_regressions(X, y_mhardship, X_test, "Material Hardship", k, features, headers)
+        p_mhard = predicts['svr']
 
     if len(p_evict) == 0:
         p_evict = np.ones(len(p_grit))
