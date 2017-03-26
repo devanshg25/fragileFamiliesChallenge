@@ -296,6 +296,7 @@ def run_regressions(X, y, X_test, labelname):
     print_regression_stats("Linear Regression " + labelname, y, y_train, y_test, runtime)
     cv = cross_val_score(lr, X, y, cv=k_fold, scoring='mean_squared_error')
     print "CV Score: " + str(cv)
+    print "CV Average: " + str(sum(cv)/float(len(cv)))
     print_line()
     ret_predictions['lr'] = np.concatenate((y_train, y_test))
 
@@ -309,6 +310,7 @@ def run_regressions(X, y, X_test, labelname):
     print_regression_stats("SVR " + labelname, y, y_train, y_test, runtime)
     cv = cross_val_score(svr, X, y, cv=k_fold, scoring='mean_squared_error')
     print "CV Score: " + str(cv)
+    print "CV Average: " + str(sum(cv)/float(len(cv)))
     print_line()
     ret_predictions['svr'] = np.concatenate((y_train, y_test))
 
@@ -322,6 +324,7 @@ def run_regressions(X, y, X_test, labelname):
     print_regression_stats("Kernel Ridge " + labelname, y, y_train, y_test, runtime)
     cv = cross_val_score(kr, X, y, cv=k_fold, scoring='mean_squared_error')
     print "CV Score: " + str(cv)
+    print "CV Average: " + str(sum(cv)/float(len(cv)))
     print_line()
     ret_predictions['kr'] = np.concatenate((y_train, y_test))
 
@@ -335,6 +338,7 @@ def run_regressions(X, y, X_test, labelname):
     print_regression_stats("Ridge " + labelname, y, y_train, y_test, runtime)
     cv = cross_val_score(r, X, y, cv=k_fold, scoring='mean_squared_error')
     print "CV Score: " + str(cv)
+    print "CV Average: " + str(sum(cv)/float(len(cv)))
     print_line()
     ret_predictions['r'] = np.concatenate((y_train, y_test))
 
@@ -348,6 +352,7 @@ def run_regressions(X, y, X_test, labelname):
     print_regression_stats("Lasso " + labelname, y, y_train, y_test, runtime)
     cv = cross_val_score(l, X, y, cv=k_fold, scoring='mean_squared_error')
     print "CV Score: " + str(cv)
+    print "CV Average: " + str(sum(cv)/float(len(cv)))
     print_line()
     ret_predictions['l'] = np.concatenate((y_train, y_test))
 
@@ -361,6 +366,7 @@ def run_regressions(X, y, X_test, labelname):
     print_regression_stats("Elastic Net " + labelname, y, y_train, y_test, runtime)
     cv = cross_val_score(el, X, y, cv=k_fold, scoring='mean_squared_error')
     print "CV Score: " + str(cv)
+    print "CV Average: " + str(sum(cv)/float(len(cv)))
     print_line()
     ret_predictions['el'] = np.concatenate((y_train, y_test))
 
@@ -374,6 +380,7 @@ def run_regressions(X, y, X_test, labelname):
     print_regression_stats("Bayesian Ridge " + labelname, y, y_train, y_test, runtime)
     cv = cross_val_score(br, X, y, cv=k_fold, scoring='mean_squared_error')
     print "CV Score: " + str(cv)
+    print "CV Average: " + str(sum(cv)/float(len(cv)))
     print_line()
     ret_predictions['br'] = np.concatenate((y_train, y_test))
 
@@ -387,6 +394,7 @@ def run_regressions(X, y, X_test, labelname):
     print_regression_stats("Gaussian Process " + labelname, y, y_train, y_test, runtime)
     cv = cross_val_score(gp, X, y, cv=k_fold, scoring='mean_squared_error')
     print "CV Score: " + str(cv)
+    print "CV Average: " + str(sum(cv)/float(len(cv)))
     print_line()
     ret_predictions['gp'] = np.concatenate((y_train, y_test))
 
@@ -432,7 +440,7 @@ def print_regression_stats(name, y, y_train, y_test, runtime, num_features=None)
     print name + " Fitting Runtime: " + runtime
 
 def write_predictions(rows):
-    with open('predictions.csv', 'wb') as f:
+    with open('prediction.csv', 'wb') as f:
         w = csv.writer(f)
         w.writerow(("challengeID", "gpa", "grit", "materialHardship", "eviction", "layoff", "jobTraining"))
         for row in rows:
