@@ -3,7 +3,7 @@ import argparse
 import numpy as np
 from sklearn.metrics import roc_curve, auc, recall_score, accuracy_score, f1_score, precision_score, confusion_matrix, precision_recall_curve, mean_squared_error
 from sklearn.feature_selection import SelectFromModel, chi2, SelectKBest, mutual_info_classif
-from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC, SVR
 from sklearn.gaussian_process import GaussianProcessClassifier, GaussianProcessRegressor
@@ -15,6 +15,7 @@ from sklearn.naive_bayes import MultinomialNB, GaussianNB
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet, BayesianRidge, LogisticRegression, LassoLars, RANSACRegressor
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.model_selection import KFold, cross_val_score
+from sklearn.preprocessing import LabelBinarizer
 import time
 import math
 import csv
@@ -93,6 +94,10 @@ def run_multi_classifications(X, y, X_test, labelname, k, features, headers):
         y = np.multiply(y, 100)
         y = y.astype(int)
 
+    lb = LabelBinarizer()
+    lb.fit(y)
+    y = lb.transform(y)
+
     k_fold = KFold(n_splits=k, shuffle=True, random_state=0)
 
     ## L2 OVR LOGISTIC REGRESSION ######
@@ -107,21 +112,41 @@ def run_multi_classifications(X, y, X_test, labelname, k, features, headers):
     #print "CV Score: " + str(cv)
     #print "CV Average: " + str(sum(cv)/float(len(cv)))
     #print_line()
+    #y_train = lb.inverse_transform(y_train)
+    #y_test = lb.inverse_transform(y_test)
     #ret_predictions['lr2o'] = np.concatenate((y_train, y_test))
 
     # L2 Multinomial LOGISTIC REGRESSION ######
-    lr2m = LogisticRegression(multi_class='multinomial', solver='lbfgs')
+    #lr2m = LogisticRegression(multi_class='multinomial', solver='lbfgs')
+    #start_time = time.time()
+    #lr2m.fit(X, y)
+    #runtime = str(time.time() - start_time)
+    #y_train = lr2m.predict(X)
+    #y_test = lr2m.predict(X_test)
+    #print_classification_stats("L2 Multinomial Logistic Regression " + labelname, y, y_train, y_test, runtime)
+    #cv = cross_val_score(lr2m, X, y, cv=k_fold)
+    #print "CV Score: " + str(cv)
+    #print "CV Average: " + str(sum(cv)/float(len(cv)))
+    #print_line()
+    #y_train = lb.inverse_transform(y_train)
+    #y_test = lb.inverse_transform(y_test)
+    #ret_predictions['lr2m'] = np.concatenate((y_train, y_test))
+
+    # K NEAREST NEIGHBORS ######
+    neigh = KNeighborsClassifier(20)
     start_time = time.time()
-    lr2m.fit(X, y)
+    neigh.fit(X, y)
     runtime = str(time.time() - start_time)
-    y_train = lr2m.predict(X)
-    y_test = lr2m.predict(X_test)
-    print_classification_stats("L2 Multinomial Logistic Regression " + labelname, y, y_train, y_test, runtime)
-    cv = cross_val_score(lr2m, X, y, cv=k_fold)
+    y_train = neigh.predict(X)
+    y_test = neigh.predict(X_test)
+    print_classification_stats("KNN Multi " + labelname, y, y_train, y_test, runtime)
+    cv = cross_val_score(neigh, X, y, cv=k_fold, scoring='mean_squared_error')
     print "CV Score: " + str(cv)
     print "CV Average: " + str(sum(cv)/float(len(cv)))
     print_line()
-    ret_predictions['lr2m'] = np.concatenate((y_train, y_test))
+    y_train = lb.inverse_transform(y_train)
+    y_test = lb.inverse_transform(y_test)
+    ret_predictions['knn'] = np.concatenate((y_train, y_test))
 
     ## L1 OVR LOGISTIC REGRESSION ######
     #lr1o = LogisticRegression(multi_class='ovr', penalty='l1')
@@ -135,6 +160,8 @@ def run_multi_classifications(X, y, X_test, labelname, k, features, headers):
     #print "CV Score: " + str(cv)
     #print "CV Average: " + str(sum(cv)/float(len(cv)))
     #print_line()
+    #y_train = lb.inverse_transform(y_train)
+    #y_test = lb.inverse_transform(y_test)
     #ret_predictions['lr1o'] = np.concatenate((y_train, y_test))
 
     # liblinear solver doesnt support a multinomial backend. But the other solvers don't work with l1 penalty. So...
@@ -151,6 +178,8 @@ def run_multi_classifications(X, y, X_test, labelname, k, features, headers):
     #print "CV Score: " + str(cv)
     #print "CV Average: " + str(sum(cv)/float(len(cv)))
     #print_line()
+    #y_train = lb.inverse_transform(y_train)
+    #y_test = lb.inverse_transform(y_test)
     #ret_predictions['lr1m'] = np.concatenate((y_train, y_test))
 
     return ret_predictions
@@ -388,6 +417,20 @@ def run_regressions(X, y, X_test, labelname, k, features, headers):
     # print_line()
     # ret_predictions['lr'] = np.concatenate((y_train, y_test))
 
+    # KNN Regression ######
+    knn = KNeighborsRegressor(50)
+    start_time = time.time()
+    knn.fit(X, y)
+    runtime = str(time.time() - start_time)
+    y_train = knn.predict(X)
+    y_test = knn.predict(X_test)
+    print_regression_stats("KNN Regression " + labelname, y, y_train, y_test, runtime)
+    cv = cross_val_score(knn, X, y, cv=k_fold, scoring='mean_squared_error')
+    print "CV Score: " + str(cv)
+    print "CV Average: " + str(sum(cv)/float(len(cv)))
+    print_line()
+    ret_predictions['knn'] = np.concatenate((y_train, y_test))
+
     # Epsilon-Support Vector Regression ######
     svr = SVR()
     start_time = time.time()
@@ -542,7 +585,7 @@ def print_regression_stats(name, y, y_train, y_test, runtime, num_features=None)
     print name + " Fitting Runtime: " + runtime
 
 def write_predictions(rows):
-    with open('prediction_2.csv', 'wb') as f:
+    with open('prediction_reg.csv', 'wb') as f:
         w = csv.writer(f)
         w.writerow(("challengeID", "gpa", "grit", "materialHardship", "eviction", "layoff", "jobTraining"))
         for row in rows:
@@ -704,31 +747,34 @@ def main():
         print "----------------------------------   REGRESSIONS   --------------------------------------"
         print("----------------------Grit----------------------------------------------")
         predicts = run_regressions(X, y_grit, X_test, "Grit", k, features, headers)
-        p_grit = predicts['svr']
+        p_grit = predicts['knn']
         if roundoff:
             p_grit = roundoff_grit(p_grit)
         print("----------------------GPA-----------------------------------------------")
         predicts = run_regressions(X, y_gpa, X_test, "GPA", k, features, headers)
-        p_gpa = predicts['svr']
+        p_gpa = predicts['knn']
         if roundoff:
             p_gpa = roundoff_gpa(p_gpa)
         print("---------------Material Hardship----------------------------------------")
         predicts = run_regressions(X, y_mhardship, X_test, "Material Hardship", k, features, headers)
-        p_mhard = predicts['l']
+        p_mhard = predicts['knn']
     if multinomial_classify:
         print "------------------------------- MULTI CLASSIFICATIONS -----------------------------------"
         print("----------------------Grit----------------------------------------------")
         predicts = run_multi_classifications(X, y_grit, X_test, "Grit", k, features, headers)
-        p_grit = predicts['lr2m']
+        p_grit = predicts['knn'] #lr2m
         p_grit = revert_grit_gpa(p_grit)
+        print p_grit[:100]
         print("----------------------GPA-----------------------------------------------")
         predicts = run_multi_classifications(X, y_gpa, X_test, "GPA", k, features, headers)
-        p_gpa = predicts['lr2m']
+        p_gpa = predicts['knn']
         p_gpa = revert_grit_gpa(p_gpa)
+        print p_gpa[:100]
         print("---------------Material Hardship----------------------------------------")
         predicts = run_multi_classifications(X, y_mhardship, X_test, "Material Hardship", k, features, headers)
-        p_mhard = predicts['lr2m']
+        p_mhard = predicts['knn']
         p_mhard = revert_mhard(p_mhard)
+        print p_mhard[:100]
 
     if len(p_evict) == 0:
         p_evict = np.ones(len(p_grit))
