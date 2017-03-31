@@ -79,11 +79,92 @@ def feature_selection_f_classif(train_matrix, test_matrix, train_targets, k_best
     #     print headers[i] + " "
     return train_matrix, test_matrix, num_features
 
+def run_multi_classifications(X, y, X_test, labelname, k, features, headers):
+    ret_predictions = {}
+
+    if features != -1:
+        y_new = np.multiply(y, 100).astype(int)
+        X, X_test, n = feature_selection_chi2(X, X_test, y_new, features, headers)
+    print('{} : {}'.format("Feature Selected X", X.shape))
+    print('{} : {}'.format("Feature Selected X_test", X_test.shape))
+    print_line()
+
+    if labelname == 'Material Hardship':
+        y = np.multiply(y, 11)
+        y = np.add(y, 1)
+        y = y.astype(int)
+    else:
+        y = np.multiply(y, 100)
+        y = y.astype(int)
+
+    k_fold = KFold(n_splits=k, shuffle=True, random_state=0)
+
+    ## L2 OVR LOGISTIC REGRESSION ######
+    #lr2o = LogisticRegression(multi_class='ovr')
+    #start_time = time.time()
+    #lr2o.fit(X, y)
+    #runtime = str(time.time() - start_time)
+    #y_train = lr2o.predict(X)
+    #y_test = lr2o.predict(X_test)
+    #print_classification_stats("L2 OVR Logistic Regression " + labelname, y, y_train, y_test, runtime)
+    #cv = cross_val_score(lr2o, X, y, cv=k_fold)
+    #print "CV Score: " + str(cv)
+    #print "CV Average: " + str(sum(cv)/float(len(cv)))
+    #print_line()
+    #ret_predictions['lr2o'] = np.concatenate((y_train, y_test))
+
+    # L2 Multinomial LOGISTIC REGRESSION ######
+    lr2m = LogisticRegression(multi_class='multinomial', solver='lbfgs')
+    start_time = time.time()
+    lr2m.fit(X, y)
+    runtime = str(time.time() - start_time)
+    y_train = lr2m.predict(X)
+    y_test = lr2m.predict(X_test)
+    print_classification_stats("L2 Multinomial Logistic Regression " + labelname, y, y_train, y_test, runtime)
+    cv = cross_val_score(lr2m, X, y, cv=k_fold)
+    print "CV Score: " + str(cv)
+    print "CV Average: " + str(sum(cv)/float(len(cv)))
+    print_line()
+    ret_predictions['lr2m'] = np.concatenate((y_train, y_test))
+
+    ## L1 OVR LOGISTIC REGRESSION ######
+    #lr1o = LogisticRegression(multi_class='ovr', penalty='l1')
+    #start_time = time.time()
+    #lr1o.fit(X, y)
+    #runtime = str(time.time() - start_time)
+    #y_train = lr1o.predict(X)
+    #y_test = lr1o.predict(X_test)
+    #print_classification_stats("L1 OVR Logistic Regression " + labelname, y, y_train, y_test, runtime)
+    #cv = cross_val_score(lr1o, X, y, cv=k_fold)
+    #print "CV Score: " + str(cv)
+    #print "CV Average: " + str(sum(cv)/float(len(cv)))
+    #print_line()
+    #ret_predictions['lr1o'] = np.concatenate((y_train, y_test))
+
+    # liblinear solver doesnt support a multinomial backend. But the other solvers don't work with l1 penalty. So...
+
+    ## L1 Multinomial LOGISTIC REGRESSION ######
+    #lr1m = LogisticRegression(multi_class='multinomial', penalty='l1')
+    #start_time = time.time()
+    #lr1m.fit(X, y)
+    #runtime = str(time.time() - start_time)
+    #y_train = lr1m.predict(X)
+    #y_test = lr1m.predict(X_test)
+    #print_classification_stats("L1 Multinomial Logistic Regression " + labelname, y, y_train, y_test, runtime)
+    #cv = cross_val_score(lr1m, X, y, cv=k_fold)
+    #print "CV Score: " + str(cv)
+    #print "CV Average: " + str(sum(cv)/float(len(cv)))
+    #print_line()
+    #ret_predictions['lr1m'] = np.concatenate((y_train, y_test))
+
+    return ret_predictions
+
 def run_classifications(X, y, X_test, labelname, k, features, headers):
     ret_predictions = {}
 
-    X, X_test, n = feature_selection_chi2(X, X_test, y, features, headers)
-    #X, X_test, n = feature_selection_chi2(X, X_test, y, 100)
+    if features != -1:
+        X, X_test, n = feature_selection_chi2(X, X_test, y, features, headers)
+
     print('{} : {}'.format("Feature Selected X", X.shape))
     print('{} : {}'.format("Feature Selected X_test", X_test.shape))
     print_line()
@@ -286,17 +367,19 @@ def run_regressions(X, y, X_test, labelname, k, features, headers):
 
     ret_predictions = {}
 
-    y_new = np.multiply(y, 100).astype(int)
+    if features != -1:
+        y_new = np.multiply(y, 100).astype(int)
+        X, X_test, n = feature_selection_chi2(X, X_test, y_new, features, headers)
 
     # X, X_test, n = feature_selection_chi2(X, X_test, y_new, features, headers)
     X1, X_test1, n1 = feature_selection_chi2(X, X_test, y_new, features, headers)
     X2, X_test2, n2 = feature_selection_f_classif(X, X_test, y_new, features, headers)
     X = np.concatenate((X1,X2), axis=1)
     X_test = np.concatenate((X_test1,X_test2), axis=1)
+
     print('{} : {}'.format("Feature Selected X", X.shape))
     print('{} : {}'.format("Feature Selected X_test", X_test.shape))
     print_line()
-
 
     # gnb = GaussianNB()
     # start_time = time.time()
@@ -483,22 +566,38 @@ def write_predictions(rows):
         for row in rows:
             w.writerow(row)
 
+def revert_grit_gpa(p):
+    y = p.astype(float)
+    y = np.divide(y, float(100))
+    return y
+
+def revert_mhard(p):
+    y = p.astype(float)
+    y = np.subtract(y, 1)
+    y = np.divide(y, float(11))
+    return y
+
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument('--mc', default=0, type=int)
     parser.add_argument('--c', default=0, type=int)
     parser.add_argument('--r', default=0, type=int)
     parser.add_argument('--w', default=0, type=int)
     parser.add_argument('--k', default=3, type=int)
-    parser.add_argument('--f', default=2000, type=int)
+    parser.add_argument('--f', default=-1, type=int) # default: no feature selection
     args = parser.parse_args()
 
     warnings.filterwarnings("ignore")
 
+    multinomial_classify = args.mc
     classify = args.c
     regress = args.r
     write = args.w
     k = args.k
     features = args.f
+
+    if multinomial_classify and regress and write:
+        print "WARNING: Will only write results from Multinomial Classification!"
 
     try:
         X = np.load('X.npy')
@@ -575,7 +674,7 @@ def main():
     p_mhard = []
 
     if classify:
-        print "------------------------------------------------------------------------"
+        print "---------------------------------- CLASSIFICATIONS --------------------------------------"
         print("-----------------Eviction-----------------------------------------------")
         predicts = run_classifications(X, y_eviction, X_test, "Eviction", k, features, headers)
         p_evict = predicts['rf']
@@ -586,7 +685,7 @@ def main():
         predicts = run_classifications(X, y_jobtraining, X_test, "Job Training", k, features, headers)
         p_jobtrain = predicts['rf']
     if regress:
-        print "------------------------------------------------------------------------"
+        print "----------------------------------   REGRESSIONS   --------------------------------------"
         print("----------------------Grit----------------------------------------------")
         predicts = run_regressions(X, y_grit, X_test, "Grit", k, 10, headers)
         p_grit = predicts['svr']
@@ -596,6 +695,20 @@ def main():
         print("---------------Material Hardship----------------------------------------")
         predicts = run_regressions(X, y_mhardship, X_test, "Material Hardship", k, 5, headers)
         p_mhard = predicts['svr']
+    if multinomial_classify:
+        print "------------------------------- MULTI CLASSIFICATIONS -----------------------------------"
+        print("----------------------Grit----------------------------------------------")
+        predicts = run_multi_classifications(X, y_grit, X_test, "Grit", k, features, headers)
+        p_grit = predicts['lr2m']
+        p_grit = revert_grit_gpa(p_grit)
+        print("----------------------GPA-----------------------------------------------")
+        predicts = run_multi_classifications(X, y_gpa, X_test, "GPA", k, features, headers)
+        p_gpa = predicts['lr2m']
+        p_gpa = revert_grit_gpa(p_gpa)
+        print("---------------Material Hardship----------------------------------------")
+        predicts = run_multi_classifications(X, y_mhardship, X_test, "Material Hardship", k, features, headers)
+        p_mhard = predicts['lr2m']
+        p_mhard = revert_mhard(p_mhard)
 
     if len(p_evict) == 0:
         p_evict = np.ones(len(p_grit))
