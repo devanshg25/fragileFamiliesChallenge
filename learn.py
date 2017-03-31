@@ -12,7 +12,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 from sklearn.naive_bayes import MultinomialNB, GaussianNB
-from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet, BayesianRidge, LogisticRegression
+from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet, BayesianRidge, LogisticRegression, LassoLars, RANSACRegressor
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.model_selection import KFold, cross_val_score
 import time
@@ -168,28 +168,6 @@ def run_classifications(X, y, X_test, labelname, k, features, headers):
     print('{} : {}'.format("Feature Selected X", X.shape))
     print('{} : {}'.format("Feature Selected X_test", X_test.shape))
     print_line()
-
-    # gnb = GaussianNB()
-    # start_time = time.time()
-    # gnb.fit(train_matrix, train_targets)
-    # runtime = str(time.time() - start_time)
-    # y_train = gnb.predict(train_matrix)
-    # y_test = gnb.predict(test_matrix)
-
-    # print_stats("Gaussian Naive Bayes", train_targets, test_targets, y_train, y_test, runtime, num_features)
-
-    # y_prob = gnb.predict_proba(test_matrix)
-    # fpr, tpr, thresholds = roc_curve(test_targets, y_prob[:,1])
-    # per, rec, thresh = precision_recall_curve(test_targets, y_prob[:,1])
-    # # pr_auc = auc(per, rec)
-    # roc_auc = auc(fpr, tpr)
-
-    # plt.plot(fpr, tpr, lw=2, color='#83b2d0',label='Gaussian Naive Bayes ROC (area = %0.2f)' % (roc_auc))
-
-    # pers.append(per)
-    # recalls.append(rec)
-    # threshs.append(thresh)
-    # # pr_aucs.append(pr_auc)
 
     k_fold = KFold(n_splits=k, shuffle=True, random_state=0)
 
@@ -434,6 +412,20 @@ def run_regressions(X, y, X_test, labelname, k, features, headers):
     print_line()
     ret_predictions['svr'] = np.concatenate((y_train, y_test))
 
+    # Lasso LARS Regression ######
+    ll = LassoLars()
+    start_time = time.time()
+    ll.fit(X, y)
+    runtime = str(time.time() - start_time)
+    y_train = ll.predict(X)
+    y_test = ll.predict(X_test)
+    print_regression_stats("Lasso Lars " + labelname, y, y_train, y_test, runtime)
+    cv = cross_val_score(ll, X, y, cv=k_fold, scoring='mean_squared_error')
+    print "CV Score: " + str(cv)
+    print "CV Average: " + str(sum(cv)/float(len(cv)))
+    print_line()
+    ret_predictions['ll'] = np.concatenate((y_train, y_test))
+
     # Kernel Ridge Regression ######
     # kr = KernelRidge()
     # start_time = time.time()
@@ -449,32 +441,32 @@ def run_regressions(X, y, X_test, labelname, k, features, headers):
     # ret_predictions['kr'] = np.concatenate((y_train, y_test))
 
     # Ridge Regression ######
-    # r = Ridge()
-    # start_time = time.time()
-    # r.fit(X, y)
-    # runtime = str(time.time() - start_time)
-    # y_train = r.predict(X)
-    # y_test = r.predict(X_test)
-    # print_regression_stats("Ridge " + labelname, y, y_train, y_test, runtime)
-    # cv = cross_val_score(r, X, y, cv=k_fold, scoring='mean_squared_error')
-    # print "CV Score: " + str(cv)
-    # print "CV Average: " + str(sum(cv)/float(len(cv)))
-    # print_line()
-    # ret_predictions['r'] = np.concatenate((y_train, y_test))
+    r = Ridge()
+    start_time = time.time()
+    r.fit(X, y)
+    runtime = str(time.time() - start_time)
+    y_train = r.predict(X)
+    y_test = r.predict(X_test)
+    print_regression_stats("Ridge " + labelname, y, y_train, y_test, runtime)
+    cv = cross_val_score(r, X, y, cv=k_fold, scoring='mean_squared_error')
+    print "CV Score: " + str(cv)
+    print "CV Average: " + str(sum(cv)/float(len(cv)))
+    print_line()
+    ret_predictions['r'] = np.concatenate((y_train, y_test))
 
     # Lasso Regression ######
-    # l = Lasso()
-    # start_time = time.time()
-    # l.fit(X, y)
-    # runtime = str(time.time() - start_time)
-    # y_train = l.predict(X)
-    # y_test = l.predict(X_test)
-    # print_regression_stats("Lasso " + labelname, y, y_train, y_test, runtime)
-    # cv = cross_val_score(l, X, y, cv=k_fold, scoring='mean_squared_error')
-    # print "CV Score: " + str(cv)
-    # print "CV Average: " + str(sum(cv)/float(len(cv)))
-    # print_line()
-    # ret_predictions['l'] = np.concatenate((y_train, y_test))
+    l = Lasso()
+    start_time = time.time()
+    l.fit(X, y)
+    runtime = str(time.time() - start_time)
+    y_train = l.predict(X)
+    y_test = l.predict(X_test)
+    print_regression_stats("Lasso " + labelname, y, y_train, y_test, runtime)
+    cv = cross_val_score(l, X, y, cv=k_fold, scoring='mean_squared_error')
+    print "CV Score: " + str(cv)
+    print "CV Average: " + str(sum(cv)/float(len(cv)))
+    print_line()
+    ret_predictions['l'] = np.concatenate((y_train, y_test))
 
     # Elastic Net ######
     # el = ElasticNet()
@@ -505,18 +497,18 @@ def run_regressions(X, y, X_test, labelname, k, features, headers):
     # ret_predictions['br'] = np.concatenate((y_train, y_test))
 
     # Gaussian Process ######
-    # gp = ElasticNet()
-    # start_time = time.time()
-    # gp.fit(X, y)
-    # runtime = str(time.time() - start_time)
-    # y_train = gp.predict(X)
-    # y_test = gp.predict(X_test)
-    # print_regression_stats("Gaussian Process " + labelname, y, y_train, y_test, runtime)
-    # cv = cross_val_score(gp, X, y, cv=k_fold, scoring='mean_squared_error')
-    # print "CV Score: " + str(cv)
-    # print "CV Average: " + str(sum(cv)/float(len(cv)))
-    # print_line()
-    # ret_predictions['gp'] = np.concatenate((y_train, y_test))
+    gp = GaussianProcessRegressor()
+    start_time = time.time()
+    gp.fit(X, y)
+    runtime = str(time.time() - start_time)
+    y_train = gp.predict(X)
+    y_test = gp.predict(X_test)
+    print_regression_stats("Gaussian Process " + labelname, y, y_train, y_test, runtime)
+    cv = cross_val_score(gp, X, y, cv=k_fold, scoring='mean_squared_error')
+    print "CV Score: " + str(cv)
+    print "CV Average: " + str(sum(cv)/float(len(cv)))
+    print_line()
+    ret_predictions['gp'] = np.concatenate((y_train, y_test))
 
     return ret_predictions
 
@@ -560,7 +552,7 @@ def print_regression_stats(name, y, y_train, y_test, runtime, num_features=None)
     print name + " Fitting Runtime: " + runtime
 
 def write_predictions(rows):
-    with open('prediction.csv', 'wb') as f:
+    with open('prediction_2.csv', 'wb') as f:
         w = csv.writer(f)
         w.writerow(("challengeID", "gpa", "grit", "materialHardship", "eviction", "layoff", "jobTraining"))
         for row in rows:
@@ -577,6 +569,38 @@ def revert_mhard(p):
     y = np.divide(y, float(11))
     return y
 
+def roundoff_grit(p):
+    p_new = np.copy(p)
+    i = 0
+    for s in p:
+        if s < 1.25:
+            p_new[i] = 1.25
+        elif s > 4:
+            p_new[i] = 4
+        else:
+            s = int((s + 0.125) / 0.25)
+            p_new[i] = (s * 0.25)
+        i = i + 1
+    print p[:100]
+    print p_new[:100]
+    return p_new
+
+def roundoff_gpa(p):
+    p_new = np.copy(p)
+    i = 0
+    for s in p:
+        if s < 1:
+            p_new[i] = 1
+        elif s > 4:
+            p_new[i] = 4
+        else:
+            s = int((s + 0.125) / 0.25)
+            p_new[i] = (s * 0.25)
+        i = i + 1
+    print p[:100]
+    print p_new[:100]
+    return p_new
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--mc', default=0, type=int)
@@ -585,6 +609,7 @@ def main():
     parser.add_argument('--w', default=0, type=int)
     parser.add_argument('--k', default=3, type=int)
     parser.add_argument('--f', default=-1, type=int) # default: no feature selection
+    parser.add_argument('--ro', default=0, type=int) # round off regression scores for gpa and grit
     args = parser.parse_args()
 
     warnings.filterwarnings("ignore")
@@ -595,6 +620,7 @@ def main():
     write = args.w
     k = args.k
     features = args.f
+    roundoff = args.ro
 
     if multinomial_classify and regress and write:
         print "WARNING: Will only write results from Multinomial Classification!"
@@ -622,7 +648,7 @@ def main():
         print('{} : {}'.format("Shape of y", y.shape))
         # print('{} : {}'.format("Shape of y_label", y_grit.shape))
         print('{} : {}'.format("Shape of X_test", X_test.shape))
-        print('{} : {}'.format("Shape of headers", headers.shape)) 
+        print('{} : {}'.format("Shape of headers", headers.shape))
 
         print('Removing bad columns')
         cols = []
@@ -680,18 +706,22 @@ def main():
         p_evict = predicts['rf']
         print("-----------------Job Loss-----------------------------------------------")
         predicts = run_classifications(X, y_jobloss, X_test, "Job Loss", k, features, headers)
-        p_jobloss = predicts['rf']
+        p_jobloss = predicts['gp']
         print("---------------Job Training---------------------------------------------")
         predicts = run_classifications(X, y_jobtraining, X_test, "Job Training", k, features, headers)
-        p_jobtrain = predicts['rf']
+        p_jobtrain = predicts['gp']
     if regress:
         print "----------------------------------   REGRESSIONS   --------------------------------------"
         print("----------------------Grit----------------------------------------------")
         predicts = run_regressions(X, y_grit, X_test, "Grit", k, 10, headers)
         p_grit = predicts['svr']
+        if roundoff:
+            p_grit = roundoff_grit(p_grit)
         print("----------------------GPA-----------------------------------------------")
         predicts = run_regressions(X, y_gpa, X_test, "GPA", k, 5, headers)
         p_gpa = predicts['svr']
+        if roundoff:
+            p_gpa = roundoff_gpa(p_gpa)
         print("---------------Material Hardship----------------------------------------")
         predicts = run_regressions(X, y_mhardship, X_test, "Material Hardship", k, 5, headers)
         p_mhard = predicts['svr']
