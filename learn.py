@@ -14,7 +14,7 @@ from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 from sklearn.naive_bayes import MultinomialNB, GaussianNB
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet, BayesianRidge, LogisticRegression, LassoLars, RANSACRegressor
 from sklearn.kernel_ridge import KernelRidge
-from sklearn.model_selection import KFold, cross_val_score
+from sklearn.model_selection import KFold, cross_val_score, train_test_split
 from sklearn.preprocessing import LabelBinarizer
 import time
 import math
@@ -79,6 +79,23 @@ def feature_selection_f_classif(train_matrix, test_matrix, train_targets, k_best
     # for i in indices:
     #     print headers[i] + " "
     return train_matrix, test_matrix, num_features
+
+def prediction_Error_Bootstrap(model, train_matrix, train_targets):
+    mse_list = []
+    for i in xrange(1000):
+        X_train, X_test, y_train, y_test = train_test_split(train_matrix, train_targets, test_size=0.33, random_state=i)
+        model.fit(X_train, y_train)
+        test_predictions = model.predict(X_test)
+        # print "Predicted:"
+        # print test_predictions[0:10]
+        # print "Actual:"
+        # print y_test[0:10]
+        mse = np.mean(np.square(y_test - test_predictions))
+        mse_list.append(mse)
+
+    # print mse_list
+    mse_list.sort()
+    return mse_list[24], mse_list[974]
 
 def run_multi_classifications(X, y, X_test, labelname, k, features, headers):
     ret_predictions = {}
@@ -242,6 +259,9 @@ def run_classifications(X, y, X_test, labelname, k, features, headers):
     print_line()
     ret_predictions['rf'] = np.concatenate((y_train, y_test))
 
+    lo,hi = prediction_Error_Bootstrap(rf, X, y)
+    print ".95 Confidence Interval: " + str(lo) + " - " + str(hi)
+
     # # K NEAREST NEIGHBORS ######
     # neigh = KNeighborsClassifier(4)
     # start_time = time.time()
@@ -284,19 +304,19 @@ def run_classifications(X, y, X_test, labelname, k, features, headers):
     # #print_line()
     # #ret_predictions['rbf'] = np.concatenate((y_train, y_test))
 
-    # # Gaussian Process ######
-    # gp = GaussianProcessClassifier(1.0 * RBF(1.0), warm_start=True)
-    # start_time = time.time()
-    # gp.fit(X, y)
-    # runtime = str(time.time() - start_time)
-    # y_train = gp.predict(X)
-    # y_test = gp.predict(X_test)
-    # print_classification_stats("Gaussian Process " + labelname, y, y_train, y_test, runtime)
-    # cv = cross_val_score(gp, X, y, cv=k_fold)
-    # print "CV Score: " + str(cv)
-    # print "CV Average: " + str(sum(cv)/float(len(cv)))
-    # print_line()
-    # ret_predictions['gp'] = np.concatenate((y_train, y_test))
+    # Gaussian Process ######
+    gp = GaussianProcessClassifier(1.0 * RBF(1.0), warm_start=True)
+    start_time = time.time()
+    gp.fit(X, y)
+    runtime = str(time.time() - start_time)
+    y_train = gp.predict(X)
+    y_test = gp.predict(X_test)
+    print_classification_stats("Gaussian Process " + labelname, y, y_train, y_test, runtime)
+    cv = cross_val_score(gp, X, y, cv=k_fold)
+    print "CV Score: " + str(cv)
+    print "CV Average: " + str(sum(cv)/float(len(cv)))
+    print_line()
+    ret_predictions['gp'] = np.concatenate((y_train, y_test))
 
     # # Decision Tree ######
     # dt = DecisionTreeClassifier()
@@ -428,7 +448,7 @@ def run_regressions(X, y, X_test, labelname, k, features, headers):
     # ret_predictions['lr'] = np.concatenate((y_train, y_test))
 
     # KNN Regression ######
-    knn = KNeighborsRegressor(50)
+    knn = KNeighborsRegressor(23)
     start_time = time.time()
     knn.fit(X, y)
     runtime = str(time.time() - start_time)
@@ -441,19 +461,22 @@ def run_regressions(X, y, X_test, labelname, k, features, headers):
     print_line()
     ret_predictions['knn'] = np.concatenate((y_train, y_test))
 
+    lo,hi = prediction_Error_Bootstrap(knn, X, y)
+    print ".95 Confidence Interval: " + str(lo) + " - " + str(hi)
+
     # Epsilon-Support Vector Regression ######
-    svr = SVR()
-    start_time = time.time()
-    svr.fit(X, y)
-    runtime = str(time.time() - start_time)
-    y_train = svr.predict(X)
-    y_test = svr.predict(X_test)
-    print_regression_stats("SVR " + labelname, y, y_train, y_test, runtime)
-    cv = cross_val_score(svr, X, y, cv=k_fold, scoring='mean_squared_error')
-    print "CV Score: " + str(cv)
-    print "CV Average: " + str(sum(cv)/float(len(cv)))
-    print_line()
-    ret_predictions['svr'] = np.concatenate((y_train, y_test))
+    # svr = SVR()
+    # start_time = time.time()
+    # svr.fit(X, y)
+    # runtime = str(time.time() - start_time)
+    # y_train = svr.predict(X)
+    # y_test = svr.predict(X_test)
+    # print_regression_stats("SVR " + labelname, y, y_train, y_test, runtime)
+    # cv = cross_val_score(svr, X, y, cv=k_fold, scoring='mean_squared_error')
+    # print "CV Score: " + str(cv)
+    # print "CV Average: " + str(sum(cv)/float(len(cv)))
+    # print_line()
+    # ret_predictions['svr'] = np.concatenate((y_train, y_test))
 
     # Lasso LARS Regression ######
     # ll = LassoLars()
@@ -762,17 +785,17 @@ def main():
     if regress:
         print "----------------------------------   REGRESSIONS   --------------------------------------"
         print("----------------------Grit----------------------------------------------")
-        predicts = run_regressions(X, y_grit, X_test, "Grit", k, features, headers)
+        predicts = run_regressions(X, y_grit, X_test, "Grit", k, 5, headers)
         p_grit = predicts['knn']
         if roundoff:
             p_grit = roundoff_grit(p_grit)
         print("----------------------GPA-----------------------------------------------")
-        predicts = run_regressions(X, y_gpa, X_test, "GPA", k, features, headers)
+        predicts = run_regressions(X, y_gpa, X_test, "GPA", k, 25, headers)
         p_gpa = predicts['knn']
         if roundoff:
             p_gpa = roundoff_gpa(p_gpa)
         print("---------------Material Hardship----------------------------------------")
-        predicts = run_regressions(X, y_mhardship, X_test, "Material Hardship", k, features, headers)
+        predicts = run_regressions(X, y_mhardship, X_test, "Material Hardship", k, 5, headers)
         p_mhard = predicts['knn']
     if multinomial_classify:
         print "------------------------------- MULTI CLASSIFICATIONS -----------------------------------"
